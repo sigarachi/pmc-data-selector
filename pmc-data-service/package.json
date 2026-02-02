@@ -1,0 +1,49 @@
+{
+  "name": "pmc-data-service",
+  "version": "0.0.1",
+  "description": "pmc-data-service",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "postinstall": "npx prisma generate",
+    "start": "npx ts-node src/index.ts"
+  },
+  "author": "Maksim Dmitriev <sigarachi@yandex.ru>",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "@types/express-session": "^1.18.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/nodemailer": "^6.4.16",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-fileupload": "^1.5.1",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.15",
+    "pg": "^8.14.1",
+    "socket.io": "^4.8.1",
+    "ts-node": "^10.9.2",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-fileupload": "^1.5.1",
+    "@types/node": "^22.4.0",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.4",
+    "prisma": "^6.19.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.5.4"
+  }
+}

@@ -13,6 +13,7 @@ export const TimelineWrapperStyled = styled.div`
   height: fit-content;
 
   z-index: 100;
+  gap: 8px;
 
   overflow-x: auto;
 
@@ -25,7 +26,9 @@ export const TimelineWrapperStyled = styled.div`
   & > * {
     flex: 1 1 0;
 
-    text-align: center;
+    display: flex;
+
+    justify-content: center;
 
     border-right: 1px solid gray;
 

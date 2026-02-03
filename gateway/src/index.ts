@@ -11,7 +11,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 4000;
 
-const ORIGIN = process.env.CORS_ORIGIN;
+const ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 
 const app = express();
 const server = http.createServer(app);

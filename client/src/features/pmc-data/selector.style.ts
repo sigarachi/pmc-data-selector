@@ -19,10 +19,21 @@ export const PmcWrapperStyled = styled.div`
 
   position: absolute;
   right: 10px;
-  top: 10%;
+  top: 20%;
   z-index: 100;
 
   & > select {
     width: 100%;
+  }
+`;
+
+export const FormWrapperStyled = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  & > * {
+    width: 100% !important;
   }
 `;

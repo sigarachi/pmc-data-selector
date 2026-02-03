@@ -1,15 +1,25 @@
-import { MyMap } from "@features/map";
-import { PmcSelector } from "@features/pmc-selector";
-import { Timeline } from "@features/timeline";
-import { PageWrapperStyled } from "@shared/components/page-wrapper/page-wrapper.style";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Router } from "./router";
+import { ThemeProvider } from "@university-ecosystem/ui-kit";
+
+const client = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchInterval: Infinity,
+      staleTime: Infinity,
+      refetchOnMount: false,
+      retry: false,
+    },
+  },
+});
 
 function App() {
   return (
-    <PageWrapperStyled>
-      <MyMap />
-      {/* <Timeline />
-      <PmcSelector /> */}
-    </PageWrapperStyled>
+    <QueryClientProvider client={client}>
+      <ThemeProvider>
+        <Router />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

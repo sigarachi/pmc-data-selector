@@ -3,8 +3,8 @@ import { Router } from "express";
 
 const router = Router();
 
-router.get("/:pmcId", ParamsController.getList);
+router.post("/:pmcId", ParamsController.getList);
 
-router.post("/:pmcId", ParamsController.createParam);
+router.post("/create/:pmcId", ParamsController.createParam);
 
 export default router;

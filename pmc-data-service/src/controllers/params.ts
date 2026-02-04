@@ -1,12 +1,18 @@
 import { ParamsService } from "@services/params";
 import { PmcService } from "@services/pmc";
 import { NextFunction, Request, Response } from "express";
-import { CreateParamDto } from "../models/param";
+import { CreateParamDto, ParamFilters } from "../models/param";
 
 export class ParamsController {
-  static async getList(req: Request, res: Response, next: NextFunction) {
+  static async getList(
+    req: Request<never, never, ParamFilters>,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
       const { pmcId } = req.params;
+
+      const { filters } = req.body;
 
       if (!pmcId) {
         throw new Error("No pmc found");
@@ -18,7 +24,7 @@ export class ParamsController {
         throw new Error("No pmc found");
       }
 
-      const data = await ParamsService.getList(pmcId);
+      const data = await ParamsService.getList(pmcId, filters);
 
       return res.status(200).json({ params: data });
     } catch (e) {

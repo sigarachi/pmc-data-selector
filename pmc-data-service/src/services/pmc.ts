@@ -1,4 +1,6 @@
 import { getById, getList, create } from "@db/pmc";
+import { CreateParamDto, ParamFilters } from "../models/param";
+import { DbFilter } from "../models/common";
 
 export class PmcService {
   static async getList() {

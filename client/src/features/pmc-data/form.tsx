@@ -1,8 +1,9 @@
 import React from "react";
 import type { ParamFormProps } from "./interfaces";
-import { Button, Input } from "@university-ecosystem/ui-kit";
+import { Button, Dropdown, Input } from "@university-ecosystem/ui-kit";
 import { Controller } from "react-hook-form";
 import { FormWrapperStyled } from "./selector.style";
+import { PARAM_TYPE_OPTIONS } from "./constants";
 
 export const ParamForm: React.FC<ParamFormProps> = ({
   control,
@@ -11,6 +12,20 @@ export const ParamForm: React.FC<ParamFormProps> = ({
 }) => {
   return (
     <FormWrapperStyled>
+      <Controller
+        control={control}
+        name="type"
+        render={({ field, fieldState }) => (
+          <Dropdown
+            label="Тип"
+            options={PARAM_TYPE_OPTIONS}
+            value={field.value}
+            onSelectOption={field.onChange}
+            errorText={fieldState.error?.message}
+          />
+        )}
+      />
+
       <Controller
         control={control}
         name="name"

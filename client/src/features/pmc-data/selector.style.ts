@@ -1,8 +1,6 @@
 import styled from "@emotion/styled";
 
 export const PmcWrapperStyled = styled.div`
-  width: fit-content;
-
   min-width: 250px;
 
   padding: 12px;

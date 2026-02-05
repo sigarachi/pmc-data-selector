@@ -24,6 +24,15 @@ export const PmcData = () => {
         <ModalWindow.Content>
           <ParamForm {...paramForm} isLoading={false} />
         </ModalWindow.Content>
+        <ModalWindow.Footer
+          actions={[
+            {
+              children: "Добавить",
+              onClick: paramForm.handleSubmitForm,
+              size: "fullWidth",
+            },
+          ]}
+        />
       </ModalWindow>
       <Text variant="body1" bold>
         Данные ПМЦ

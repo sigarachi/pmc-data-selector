@@ -1,8 +1,6 @@
 import styled from "@emotion/styled";
 
 export const PmcWrapperStyled = styled.div`
-  width: fit-content;
-
   min-width: 250px;
 
   padding: 12px;
@@ -21,5 +19,16 @@ export const PmcWrapperStyled = styled.div`
 
   & > select {
     width: 100%;
+  }
+`;
+
+export const FormWrapperStyled = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  & > * {
+    width: 100% !important;
   }
 `;

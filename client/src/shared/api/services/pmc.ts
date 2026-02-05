@@ -7,4 +7,8 @@ export class PmcService {
 
     return data;
   }
+
+  static async create(name: string): Promise<void> {
+    await network.post(`/pmc-api/pmc`, { name });
+  }
 }

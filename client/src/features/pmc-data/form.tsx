@@ -1,15 +1,11 @@
 import React from "react";
 import type { ParamFormProps } from "./interfaces";
-import { Button, Dropdown, Input } from "@university-ecosystem/ui-kit";
+import { Dropdown, Input } from "@university-ecosystem/ui-kit";
 import { Controller } from "react-hook-form";
 import { FormWrapperStyled } from "./selector.style";
 import { PARAM_TYPE_OPTIONS } from "./constants";
 
-export const ParamForm: React.FC<ParamFormProps> = ({
-  control,
-  isLoading,
-  handleSubmitForm,
-}) => {
+export const ParamForm: React.FC<ParamFormProps> = ({ control }) => {
   return (
     <FormWrapperStyled>
       <Controller
@@ -20,6 +16,7 @@ export const ParamForm: React.FC<ParamFormProps> = ({
             label="Тип"
             options={PARAM_TYPE_OPTIONS}
             value={field.value}
+            variant="fullwidth"
             onSelectOption={field.onChange}
             errorText={fieldState.error?.message}
           />
@@ -34,6 +31,7 @@ export const ParamForm: React.FC<ParamFormProps> = ({
             required
             label="Название"
             value={field.value}
+            variant="fullwidth"
             errorText={fieldState.error?.message}
             onChange={field.onChange}
           />
@@ -48,15 +46,12 @@ export const ParamForm: React.FC<ParamFormProps> = ({
             required
             label="Значение"
             value={field.value}
+            variant="fullwidth"
             errorText={fieldState.error?.message}
             onChange={field.onChange}
           />
         )}
       />
-
-      <Button isLoading={isLoading} onClick={handleSubmitForm}>
-        Создать
-      </Button>
     </FormWrapperStyled>
   );
 };

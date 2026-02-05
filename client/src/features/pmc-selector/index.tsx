@@ -1,18 +1,41 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { PmcWrapperStyled } from "./selector.style";
 import { PmcService } from "@shared/api/services/pmc";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Text } from "@university-ecosystem/ui-kit";
+import {
+  Button,
+  ModalWindow,
+  Text,
+  useToggle,
+} from "@university-ecosystem/ui-kit";
 import { useCallback, useEffect } from "react";
+import { CreatePmcForm } from "./form";
+import { usePmcForm } from "./hooks/use-pmc-form";
 
 export const PmcSelector = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { id = "" } = useParams();
 
-  const { data } = useQuery({
+  const { flag, toggleOn, toggleOff } = useToggle();
+
+  const { data, refetch } = useQuery({
     queryKey: ["pmc-list"],
     queryFn: () => PmcService.getList(),
+  });
+
+  const { mutate } = useMutation({
+    mutationFn: (name: string) => PmcService.create(name),
+    onSuccess: async () => {
+      await refetch();
+      toggleOff();
+    },
+  });
+
+  const pmcForm = usePmcForm({
+    onSubmit: (values) => {
+      mutate(values.name);
+    },
   });
 
   const handleChange = useCallback(
@@ -46,6 +69,25 @@ export const PmcSelector = () => {
           </option>
         ))}
       </select>
+
+      <ModalWindow isOpen={flag} onClose={toggleOff}>
+        <ModalWindow.Header title="Добавить ПМЦ" onClose={toggleOff} />
+        <ModalWindow.Content>
+          <CreatePmcForm {...pmcForm} />
+        </ModalWindow.Content>
+        <ModalWindow.Footer
+          actions={[
+            {
+              children: "Добавить",
+              onClick: pmcForm.handleSubmitForm,
+              size: "fullWidth",
+            },
+          ]}
+        />
+      </ModalWindow>
+      <Button variant="text" onClick={toggleOn}>
+        Добавить
+      </Button>
     </PmcWrapperStyled>
   );
 };

@@ -17,9 +17,6 @@ export const PmcWrapperStyled = styled.div`
 
   gap: 8px;
 
-  position: absolute;
-  right: 10px;
-  top: 20%;
   z-index: 100;
 
   & > select {

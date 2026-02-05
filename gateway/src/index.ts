@@ -19,14 +19,18 @@ const server = http.createServer(app);
 const services = [
   {
     route: "/pmc-api",
-    target: "http://localhost:5000/",
+    target: "http://localhost:3000/",
+  },
+  {
+    route: "/netcdf-api",
+    target: "http://localhost:8000/",
   },
 ];
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }),
 );
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+//app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(
   cors({
     credentials: true,

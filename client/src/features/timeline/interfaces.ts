@@ -1,4 +1,1 @@
-export interface TimeLineProps {
-  selected?: string;
-  onSelect: (value: string) => void;
-}
+export interface TimeLineProps {}

@@ -1,15 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import {
-  CircleMarker,
-  MapContainer,
-  Popup,
-  TileLayer,
-  Tooltip,
-} from "react-leaflet";
+import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ParamService } from "@shared/api/services/param";
 import type { ParamFilters } from "@shared/api/models/param";
@@ -17,8 +11,13 @@ import { getRandomColor } from "@shared/utils/get-random-color";
 
 export const MyMap = (): React.ReactElement => {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
 
-  const [filters, setFilters] = useState<ParamFilters["filters"]>([
+  const [time, setTime] = useState<string>("");
+  const [date, setDate] = useState<string>("");
+  const [variable, setVariable] = useState<string>("");
+
+  const [filters] = useState<ParamFilters["filters"]>([
     { field: "type", condition: "equals", value: "coords" },
   ]);
 
@@ -27,6 +26,21 @@ export const MyMap = (): React.ReactElement => {
     queryFn: () => ParamService.getList(id, { filters: filters }),
     enabled: Boolean(id.length),
   });
+
+  useEffect(() => {
+    const searchTime = searchParams.get("time");
+    const searchDate = searchParams.get("date");
+    const searchVariable = searchParams.get("variable");
+    if (searchTime) {
+      setTime(searchTime);
+    }
+    if (searchDate) {
+      setDate(searchDate);
+    }
+    if (searchVariable) {
+      setVariable(searchVariable);
+    }
+  }, [searchParams]);
 
   return (
     <div>
@@ -39,6 +53,15 @@ export const MyMap = (): React.ReactElement => {
         key={new Date().getTime()}
       >
         <TileLayer url="https://{s}.tile.osm.org/{z}/{x}/{y}.png" />
+        <TileLayer
+          opacity={0.7}
+          url={`http://localhost:4000/netcdf-api/tile/{z}/{x}/{y}?${new URLSearchParams(
+            {
+              variable: variable,
+              time: `${date} ${time}`,
+            },
+          )}`}
+        />
         {data?.params &&
           data.params.map((item) => (
             <CircleMarker

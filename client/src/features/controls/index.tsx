@@ -1,20 +1,18 @@
 import { PmcData } from "@features/pmc-data";
 import { PmcSelector } from "@features/pmc-selector";
 import { Timeline } from "@features/timeline";
-import { useCallback, useState } from "react";
+import { Variables } from "@features/variables";
+import { ControlsWrapperStyled } from "./controls.style";
 
 export const Controls = () => {
-  const [selected, setSelected] = useState<string>();
-
-  const handleSelect = useCallback((value: string) => {
-    setSelected(value);
-  }, []);
-
   return (
     <>
-      <Timeline onSelect={handleSelect} selected={selected} />
-      <PmcSelector />
-      <PmcData />
+      <ControlsWrapperStyled>
+        <PmcSelector />
+        <PmcData />
+        <Variables />
+      </ControlsWrapperStyled>
+      <Timeline />
     </>
   );
 };

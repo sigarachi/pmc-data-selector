@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ParamService } from "@shared/api/services/param";
 import type { ParamFilters } from "@shared/api/models/param";
 import { getRandomColor } from "@shared/utils/get-random-color";
+import { options } from "@shared/config";
 
 export const MyMap = (): React.ReactElement => {
   const { id = "" } = useParams();
@@ -55,7 +56,7 @@ export const MyMap = (): React.ReactElement => {
         <TileLayer url="https://{s}.tile.osm.org/{z}/{x}/{y}.png" />
         <TileLayer
           opacity={0.7}
-          url={`http://localhost:4000/netcdf-api/tile/{z}/{x}/{y}?${new URLSearchParams(
+          url={`${options.apiUrl}/netcdf-api/tile/{z}/{x}/{y}?${new URLSearchParams(
             {
               variable: variable,
               time: `${date} ${time}`,

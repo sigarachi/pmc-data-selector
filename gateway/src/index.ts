@@ -13,17 +13,21 @@ const PORT = process.env.PORT || 4000;
 
 const ORIGIN = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 
+const PMC_API = process.env.PMC_API ?? "http://localhost:3000";
+
+const NETCDF_API = process.env.NETCDF_API ?? "http://localhost:8000";
+
 const app = express();
 const server = http.createServer(app);
 
 const services = [
   {
     route: "/pmc-api",
-    target: "http://localhost:3000/",
+    target: PMC_API,
   },
   {
     route: "/netcdf-api",
-    target: "http://localhost:8000/",
+    target: NETCDF_API,
   },
 ];
 app.use(helmet({ crossOriginResourcePolicy: false }));

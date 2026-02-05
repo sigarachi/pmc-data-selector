@@ -6,3 +6,4 @@ matplotlib
 scipy
 pandas
 mercantile
+netcdf4

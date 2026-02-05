@@ -7,4 +7,7 @@ declare module "react-leaflet" {
     minZoom: number;
     maxZoom: number;
   }
+  export interface TileLayerProps {
+    opacity?: number;
+  }
 }

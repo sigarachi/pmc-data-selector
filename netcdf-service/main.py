@@ -634,9 +634,11 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
 @app.get("/tile/{z}/{x}/{y}")
 def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
 
+    print(pressure_level)
+
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
     ds_file = find_matching_dataset_by_time(
-        time, dataset_type="era5", time_tolerance_hours=2)
+        time, dataset_type="era5", time_tolerance_hours=1)
 
     if ds_file is None:
         return Response()

@@ -65,14 +65,18 @@ export const MyMap = (): React.ReactElement => {
         />
         {data?.params &&
           data.params.map((item) => (
-            <CircleMarker
-              center={item.value.trim().split(",").reverse()}
-              pathOptions={{
-                fillColor: getRandomColor(),
-              }}
-            >
-              <Popup>{item.name}</Popup>
-            </CircleMarker>
+            <>
+              {item.value && (
+                <CircleMarker
+                  center={item.value.trim().split(",").reverse()}
+                  pathOptions={{
+                    fillColor: getRandomColor(),
+                  }}
+                >
+                  <Popup>{item.name}</Popup>
+                </CircleMarker>
+              )}
+            </>
           ))}
       </MapContainer>
     </div>

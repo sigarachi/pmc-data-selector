@@ -128,13 +128,23 @@ export const SelectPmc = () => {
             />
             <PaginationWrapperStyled>
               {page !== 1 && (
-                <Button size="inherit" onlyIcon icon={<>{"<"}</>} />
+                <Button
+                  size="inherit"
+                  onlyIcon
+                  icon={<>{"<"}</>}
+                  onClick={() => handleIncreasePage(-1)}
+                />
               )}
               <Text variant="body1" bold>
                 {page}
               </Text>
               {!data?.isLastPage && (
-                <Button size="inherit" onlyIcon icon={<>{">"}</>} />
+                <Button
+                  size="inherit"
+                  onlyIcon
+                  icon={<>{">"}</>}
+                  onClick={() => handleIncreasePage()}
+                />
               )}
             </PaginationWrapperStyled>
           </ContentWrapperStyled>

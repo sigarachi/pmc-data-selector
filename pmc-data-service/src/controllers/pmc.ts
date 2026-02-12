@@ -1,12 +1,39 @@
 import { NextFunction, Request, Response } from "express";
 import { PmcService } from "@services/pmc";
+import { UploadedFile } from "express-fileupload";
+import { convertCsvToJson } from "../utils/csv-to-json";
+import { CsvParamName, CsvParamNameMap } from "../models/param";
+import { ParamsService } from "@services/params";
+import { PmcFilters } from "../models/pmc";
+import { PaginatedRequest } from "../models/common";
 
 export class PmcController {
-  static async getList(req: Request, res: Response, next: NextFunction) {
+  static async getList(
+    req: Request<never, never, PmcFilters, PaginatedRequest>,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const data = await PmcService.getList();
+      const { filters } = req.body;
+      const { page, pageSize } = req.query;
 
-      return res.status(200).json({ list: data });
+      const offset = Number(page) || 1;
+      const limit = Number(pageSize) || 10;
+
+      const skip = (offset - 1) * limit;
+
+      const [data, count] = await PmcService.getList(limit, skip, filters);
+
+      const totalPages = Math.ceil(count / limit);
+
+      return res
+        .status(200)
+        .json({
+          list: data,
+          page,
+          pageSize,
+          isLastPage: offset === totalPages,
+        });
     } catch (e) {
       next(e);
     }
@@ -22,7 +49,7 @@ export class PmcController {
 
       const data = await PmcService.getById(id);
 
-      return res.status(200).json({ list: data });
+      return res.status(200).json({ pmc: data });
     } catch (e) {
       next(e);
     }
@@ -43,6 +70,52 @@ export class PmcController {
       const data = await PmcService.create(payload.name);
 
       return res.status(200).json(data);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async upload(req: Request, res: Response, next: NextFunction) {
+    try {
+      const files = req.files;
+
+      if (!files) {
+        throw new Error("No file provided");
+      }
+
+      if (files) {
+        const file: UploadedFile = files.file as UploadedFile;
+
+        const promises: Array<Promise<unknown>> = [];
+
+        const candidates: Array<Record<CsvParamName, string>> =
+          convertCsvToJson(file.data.toString());
+
+        candidates.forEach(async (item) => {
+          const name = `ПМЦ ${item.datetime_formation}`;
+
+          let pmc = await PmcService.getByName(name);
+
+          if (!pmc) {
+            pmc = await PmcService.create(name);
+          }
+
+          Object.keys(item).forEach((value: string) => {
+            const field = value as CsvParamName;
+
+            promises.push(
+              ParamsService.create(pmc.id, {
+                name: CsvParamNameMap[field],
+                type: field.includes("coords") ? "coords" : "string",
+                value: item[field],
+              }),
+            );
+          });
+        });
+        await Promise.all(promises);
+      }
+
+      return res.status(200);
     } catch (e) {
       next(e);
     }

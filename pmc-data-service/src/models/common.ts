@@ -1,4 +1,4 @@
-export type FilterCondition = "equals" | "not";
+export type FilterCondition = "equals" | "not" | "contains";
 
 export type Filter<T, K extends keyof T> = {
   field: K;
@@ -16,4 +16,9 @@ export type DbFilter<T> = {
         [J in FilterCondition]?: T[K];
       }
     | T[K];
+};
+
+export type PaginatedRequest = {
+  page: number;
+  pageSize: number;
 };

@@ -17,7 +17,7 @@ export const MyMap = (): React.ReactElement => {
   const [time, setTime] = useState<string>("");
   const [date, setDate] = useState<string>("");
   const [variable, setVariable] = useState<string>("");
-  const [pressure, setPressure] = useState<string>("");
+  const [pressure, setPressure] = useState<string>("250");
 
   const [filters] = useState<ParamFilters["filters"]>([
     { field: "type", condition: "equals", value: "coords" },

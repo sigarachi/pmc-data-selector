@@ -1,6 +1,6 @@
 import { PmcWrapperStyled } from "@features/pmc-data/selector.style";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PRESSURE_LEVEL, VARIABLES } from "./constants";
 import { useSearchParams } from "react-router-dom";
 
@@ -27,6 +27,18 @@ export const Variables = (): React.ReactElement => {
     },
     [searchParams, setSearchParams],
   );
+
+  useEffect(() => {
+    const searchVariable = searchParams.get("variable");
+    const searchPressure = searchParams.get("pressure");
+
+    if (searchVariable) {
+      setSelected(searchVariable);
+    }
+    if (searchPressure) {
+      setPressure(searchPressure);
+    }
+  }, [searchParams]);
 
   return (
     <PmcWrapperStyled>

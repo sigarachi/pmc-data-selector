@@ -1,14 +1,14 @@
 import { getTimeArray } from "@shared/utils/get-time-array";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TimelineWrapperStyled } from "./timeline.style";
-import { Badge } from "@university-ecosystem/ui-kit";
+import { Badge, Button } from "@university-ecosystem/ui-kit";
 import type { TimeLineProps } from "./interfaces";
 import { useSearchParams } from "react-router-dom";
 
 export const Timeline: React.FC<TimeLineProps> = () => {
   const timeLine = useMemo(() => getTimeArray(), []);
 
-  const [selected, setSelected] = useState<string>();
+  const [selected, setSelected] = useState<string>("");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const handleSelect = useCallback(
@@ -20,8 +20,51 @@ export const Timeline: React.FC<TimeLineProps> = () => {
     [searchParams, setSearchParams],
   );
 
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      const key = event.key;
+
+      if (key === "ArrowRight") {
+        const index = timeLine.indexOf(selected);
+
+        if (index && index + 1 < timeLine.length) {
+          handleSelect(timeLine[index + 1]);
+        } else if (index && index + 1 >= timeLine.length) {
+          handleSelect(timeLine[0]);
+        }
+      }
+
+      if (key === "ArrowLeft") {
+        const index = timeLine.indexOf(selected);
+
+        if (index && index - 1 > 0) {
+          handleSelect(timeLine[index - 1]);
+        } else if (index && index + 1 <= 0) {
+          handleSelect(timeLine[-1]);
+        }
+      }
+    },
+    [selected, timeLine, handleSelect],
+  );
+
+  useEffect(() => {
+    const searchTime = searchParams.get("time");
+    if (searchTime) {
+      setSelected(searchTime);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [handleKeyPress]);
+
   return (
     <TimelineWrapperStyled>
+      <Button size="inherit" onlyIcon icon={<>{"<"}</>} />
       {timeLine.map((item) => (
         <Badge
           variant={item === selected ? "filled" : "outlined"}
@@ -30,6 +73,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
           onClick={() => handleSelect(item)}
         />
       ))}
+      <Button size="inherit" onlyIcon icon={<>{">"}</>} />
     </TimelineWrapperStyled>
   );
 };

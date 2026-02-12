@@ -13,7 +13,7 @@ export const getList = async (
       ...filters,
     },
     orderBy: {
-      name: "asc",
+      name: "desc",
     },
   });
 

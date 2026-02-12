@@ -27,9 +27,9 @@ export const Timeline: React.FC<TimeLineProps> = () => {
       if (key === "ArrowRight") {
         const index = timeLine.indexOf(selected);
 
-        if (index && index + 1 < timeLine.length) {
+        if (index !== -1 && index + 1 < timeLine.length) {
           handleSelect(timeLine[index + 1]);
-        } else if (index && index + 1 >= timeLine.length) {
+        } else if (index !== -1 && index + 1 >= timeLine.length) {
           handleSelect(timeLine[0]);
         }
       }
@@ -39,8 +39,6 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
         if (index && index - 1 > 0) {
           handleSelect(timeLine[index - 1]);
-        } else if (index && index + 1 <= 0) {
-          handleSelect(timeLine[-1]);
         }
       }
     },

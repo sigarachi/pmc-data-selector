@@ -12,6 +12,9 @@ export const getList = async (
     where: {
       ...filters,
     },
+    orderBy: {
+      name: "asc",
+    },
   });
 
 export const getCount = async () => prisma.pMC.count();

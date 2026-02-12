@@ -663,11 +663,11 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
             vmin = np.nanpercentile(wind_global, 2)
             vmax = np.nanpercentile(wind_global, 98)
 
-            cmap = get_panoply_colormap("NEO_wind_spd_anom")
+            cmap = get_panoply_colormap("NEO_modis_sst_45")
         else:
             tile_data = get_tile_data(ds, variable, x, y, z, time_idx=0)
             vmin, vmax = global_vmin, global_vmax
-            cmap = get_panoply_colormap("NEO_wind_spd_anom")
+            cmap = get_panoply_colormap("NEO_modis_sst_45")
 
     elif variable == 'z':
         var = ds[variable]

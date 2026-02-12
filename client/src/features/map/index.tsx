@@ -17,6 +17,7 @@ export const MyMap = (): React.ReactElement => {
   const [time, setTime] = useState<string>("");
   const [date, setDate] = useState<string>("");
   const [variable, setVariable] = useState<string>("");
+  const [pressure, setPressure] = useState<string>("");
 
   const [filters] = useState<ParamFilters["filters"]>([
     { field: "type", condition: "equals", value: "coords" },
@@ -32,6 +33,7 @@ export const MyMap = (): React.ReactElement => {
     const searchTime = searchParams.get("time");
     const searchDate = searchParams.get("date");
     const searchVariable = searchParams.get("variable");
+    const searchPressure = searchParams.get("pressure");
     if (searchTime) {
       setTime(searchTime);
     }
@@ -40,6 +42,9 @@ export const MyMap = (): React.ReactElement => {
     }
     if (searchVariable) {
       setVariable(searchVariable);
+    }
+    if (searchPressure) {
+      setPressure(searchPressure);
     }
   }, [searchParams]);
 
@@ -60,6 +65,7 @@ export const MyMap = (): React.ReactElement => {
             {
               variable: variable,
               time: `${date} ${time}`,
+              pressure_level: pressure,
             },
           )}`}
         />

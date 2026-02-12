@@ -1,1 +1,27 @@
-export const VARIABLES = ["msl", "u10", "v10"];
+export const VARIABLES = [
+  {
+    title: "Геопотенциал",
+    value: "z",
+  },
+  {
+    title: "Ветер",
+    value: "wind_speed",
+  },
+];
+
+export const PRESSURE_LEVEL = [
+  "250",
+  "300",
+  "350",
+  "400",
+  "450",
+  "500",
+  "550",
+  "600",
+  "650",
+  "700",
+  "750",
+  "775",
+  "800",
+  "850",
+];

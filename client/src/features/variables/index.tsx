@@ -1,11 +1,12 @@
 import { PmcWrapperStyled } from "@features/pmc-data/selector.style";
 import type React from "react";
 import { useCallback, useState } from "react";
-import { VARIABLES } from "./constants";
+import { PRESSURE_LEVEL, VARIABLES } from "./constants";
 import { useSearchParams } from "react-router-dom";
 
 export const Variables = (): React.ReactElement => {
   const [selected, setSelected] = useState<string>("");
+  const [pressure, setPressure] = useState<string>("");
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -13,6 +14,15 @@ export const Variables = (): React.ReactElement => {
     (value: string) => {
       setSelected(value);
       searchParams.set("variable", value);
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const handlePressureSelect = useCallback(
+    (value: string) => {
+      setPressure(value);
+      searchParams.set("pressure", value);
       setSearchParams(searchParams);
     },
     [searchParams, setSearchParams],
@@ -26,9 +36,21 @@ export const Variables = (): React.ReactElement => {
       >
         <option value="">Выберите переменную</option>
         {VARIABLES.map((item) => (
-          <option value={item}>{item}</option>
+          <option value={item.value}>{item.title}</option>
         ))}
       </select>
+
+      {selected === "z" && (
+        <select
+          value={pressure}
+          onChange={(event) => handlePressureSelect(event.target.value)}
+        >
+          <option value="">Выберите уровень давления</option>
+          {PRESSURE_LEVEL.map((item) => (
+            <option value={item}>{item}</option>
+          ))}
+        </select>
+      )}
     </PmcWrapperStyled>
   );
 };

@@ -20,29 +20,40 @@ export const Timeline: React.FC<TimeLineProps> = () => {
     [searchParams, setSearchParams],
   );
 
-  const handleKeyPress = useCallback(
-    (event: KeyboardEvent) => {
-      const key = event.key;
+  const handleTimelineSelect = useCallback(
+    (isRight: boolean) => {
+      const index = timeLine.indexOf(selected);
 
-      if (key === "ArrowRight") {
-        const index = timeLine.indexOf(selected);
-
+      if (isRight) {
         if (index !== -1 && index + 1 < timeLine.length) {
           handleSelect(timeLine[index + 1]);
         } else if (index !== -1 && index + 1 >= timeLine.length) {
           handleSelect(timeLine[0]);
         }
-      }
-
-      if (key === "ArrowLeft") {
-        const index = timeLine.indexOf(selected);
-
-        if (index !== -1) {
+      } else {
+        if (index !== -1 && index - 1 >= 0) {
           handleSelect(timeLine[index - 1]);
+        } else if (index !== -1 && index - 1 < 0) {
+          handleSelect(timeLine[timeLine.length - 1]);
         }
       }
     },
     [selected, timeLine, handleSelect],
+  );
+
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      const key = event.key;
+
+      if (key === "ArrowRight") {
+        handleTimelineSelect(true);
+      }
+
+      if (key === "ArrowLeft") {
+        handleTimelineSelect(false);
+      }
+    },
+    [handleTimelineSelect],
   );
 
   useEffect(() => {
@@ -62,7 +73,12 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
   return (
     <TimelineWrapperStyled>
-      <Button size="inherit" onlyIcon icon={<>{"<"}</>} />
+      <Button
+        size="inherit"
+        onlyIcon
+        icon={<>{"<"}</>}
+        onClick={() => handleTimelineSelect(false)}
+      />
       {timeLine.map((item) => (
         <Badge
           variant={item === selected ? "filled" : "outlined"}
@@ -71,7 +87,12 @@ export const Timeline: React.FC<TimeLineProps> = () => {
           onClick={() => handleSelect(item)}
         />
       ))}
-      <Button size="inherit" onlyIcon icon={<>{">"}</>} />
+      <Button
+        size="inherit"
+        onlyIcon
+        icon={<>{">"}</>}
+        onClick={() => handleTimelineSelect(true)}
+      />
     </TimelineWrapperStyled>
   );
 };

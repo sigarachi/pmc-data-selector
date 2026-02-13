@@ -636,7 +636,7 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
     ds_file = find_matching_dataset_by_time(
         time, dataset_type="era5", time_tolerance_hours=1)
 
-    if ds_file is None:
+    if ds_file is None or variable is None:
         return Response()
 
     filename, dataset, time_diff = ds_file

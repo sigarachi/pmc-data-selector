@@ -5,7 +5,7 @@ export const VARIABLES = [
   },
   {
     title: "Ветер",
-    value: "u10",
+    value: "u",
   },
 ];
 

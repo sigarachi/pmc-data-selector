@@ -90,6 +90,10 @@ def init_database():
             ON dataset_times (dataset_id, time_value)
         """)
 
+        cursor.execute("""
+            CREATE INDEX idx_datasets_type_time ON datasets(dataset_type, dataset_time)
+        """)
+
         conn.commit()
         conn.close()
 
@@ -304,36 +308,30 @@ def find_matching_dataset_by_time(pmc_time: pd.Timestamp,
                                   dataset_type: str = "era5",
                                   time_tolerance_hours: float = 3) -> Optional[Tuple[str, pd.Timestamp, float]]:
     try:
-        conn = sqlite3.connect(str(DB_PATH))
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        target_time_str = pmc_time.isoformat(sep=' ')
+        tolerance_seconds = time_tolerance_hours * 3600
 
-        cursor.execute("""
-            SELECT file_path, dataset_time 
-            FROM datasets 
-            WHERE dataset_type = ?
-            ORDER BY file_name
-        """, (dataset_type,))
+        with sqlite3.connect(str(DB_PATH)) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    file_path, 
+                    dataset_time
+                FROM datasets 
+                WHERE dataset_type = ?
+                ORDER BY ABS(julianday(dataset_time) - julianday(?))
+                LIMIT 1
+            """, (dataset_type, target_time_str))
 
-        best_match = None
-        min_time_diff = float('inf')
+            row = cursor.fetchone()
 
-        for row in cursor.fetchall():
-            try:
+            if row:
                 file_time = pd.to_datetime(row['dataset_time'])
                 time_diff = abs((pmc_time - file_time).total_seconds() / 3600)
 
-                if time_diff <= time_tolerance_hours and time_diff < min_time_diff:
-                    min_time_diff = time_diff
-                    best_match = (row['file_path'], file_time)
-
-            except Exception as e:
-                continue
-
-        conn.close()
-
-        if best_match:
-            return (best_match[0], best_match[1], min_time_diff)
+                if time_diff <= time_tolerance_hours:
+                    return (row['file_path'], file_time, time_diff)
 
         return find_in_times_table(pmc_time, dataset_type, time_tolerance_hours)
 
@@ -634,8 +632,6 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
 @app.get("/tile/{z}/{x}/{y}")
 def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
 
-    print(pressure_level)
-
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
     ds_file = find_matching_dataset_by_time(
         time, dataset_type="era5", time_tolerance_hours=1)
@@ -647,19 +643,37 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
 
     ds, global_vmin, global_vmax = open_nc_with_stats(filename, variable)
 
-    if variable == 'wind_speed' or variable == 'u10' or variable == 'v10':
-        if 'u10' in ds and 'v10' in ds:
-            u_data = get_tile_data(ds, 'u10', x, y, z, time_idx=0)
-            v_data = get_tile_data(ds, 'v10', x, y, z, time_idx=0)
+    if variable == 'wind_speed' or variable == 'u' or variable == 'v':
+        var = ds[variable]
+        if 'u' in ds and 'v' in ds and 'pressure_level' in var.dims:
+            levels = var.pressure_level.values
+            level_index = None
+
+            for i, level in enumerate(levels):
+                if float(level) == float(pressure_level):
+                    level_index = i
+                    print(f"✓ Found {pressure_level} hPa at index {i}")
+                    break
+
+            if level_index is None:
+                level_index = np.argmin(
+                    np.abs(levels.astype(float) - float(pressure_level)))
+                print(
+                    f"! Using closest: index {level_index}, level {levels[level_index]} hPa")
+
+            u_data = get_tile_data(
+                ds, 'u', x, y, z, time_idx=0, level_index=level_index)
+            v_data = get_tile_data(
+                ds, 'v', x, y, z, time_idx=0, level_index=level_index)
 
             tile_data = np.sqrt(u_data**2 + v_data**2)
 
-            if 'valid_time' in ds['u10'].dims:
-                u_global = ds['u10'].isel(valid_time=0).values
-                v_global = ds['v10'].isel(valid_time=0).values
+            if 'valid_time' in ds['u'].dims:
+                u_global = ds['u'].isel(valid_time=0).values
+                v_global = ds['v'].isel(valid_time=0).values
             else:
-                u_global = ds['u10'].values
-                v_global = ds['v10'].values
+                u_global = ds['u'].values
+                v_global = ds['v'].values
 
             wind_global = np.sqrt(u_global**2 + v_global**2)
             vmin = np.nanpercentile(wind_global, 2)

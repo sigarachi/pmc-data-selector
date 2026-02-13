@@ -52,7 +52,7 @@ export const Variables = (): React.ReactElement => {
         ))}
       </select>
 
-      {selected === "z" && (
+      {selected && (
         <select
           value={pressure}
           onChange={(event) => handlePressureSelect(event.target.value)}

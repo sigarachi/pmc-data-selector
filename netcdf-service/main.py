@@ -637,8 +637,6 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
     if variable == 'u10' or variable == 'v10':
         var = ds[variable]
         if 'u10' in ds and 'v10' in ds:
-            levels = var.pressure_level.values
-            level_index = None
 
             u_data = get_tile_data(
                 ds, 'u', x, y, z, time_idx=0)

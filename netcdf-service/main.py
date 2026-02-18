@@ -91,7 +91,7 @@ def init_database():
         """)
 
         cursor.execute("""
-            CREATE INDEX idx_datasets_type_time ON datasets(dataset_type, dataset_time)
+            CREATE INDEX IF NOT EXISTS idx_datasets_type_time ON datasets(dataset_type, dataset_time)
         """)
 
         conn.commit()
@@ -103,12 +103,15 @@ def init_database():
         traceback.print_exc()
 
 
-def extract_dataset_info(file_path: str) -> Tuple[Optional[str], Optional[pd.Timestamp], List[str], List[str]]:
+def extract_dataset_info(
+    file_path: str
+) -> Tuple[Optional[str], Optional[pd.Timestamp], List[str], List[pd.Timestamp]]:
     """Извлекает информацию о датасете из NetCDF файла"""
+
     try:
         with xr.open_dataset(file_path, engine="netcdf4", decode_times=False) as ds:
-            # Определяем тип датасета по имени файла
             file_name = Path(file_path).name.lower()
+
             if 'era5' in file_name:
                 dataset_type = 'era5'
             elif 'carra' in file_name:
@@ -116,98 +119,40 @@ def extract_dataset_info(file_path: str) -> Tuple[Optional[str], Optional[pd.Tim
             else:
                 dataset_type = 'unknown'
 
-            # Извлекаем время
-            dataset_time = None
-            times = []
+            # --- Декодируем CF-время один раз ---
+            ds_decoded = xr.decode_cf(ds, decode_times=True)
 
-            # Пробуем разные способы получения времени
-            if 'time' in ds.coords:
-                time_var = ds.time
-                if time_var.size > 0:
-                    try:
-                        # Способ 1: Пробуем декодировать с явным указанием decode_times=True
-                        ds_decoded = xr.decode_cf(ds, decode_times=True)
-                        dataset_time = pd.to_datetime(
-                            ds_decoded.time.values[0])
+            time_values: List[pd.Timestamp] = []
 
-                        # Если есть несколько временных срезов
-                        if time_var.size > 1:
-                            for i in range(min(time_var.size, 10)):
-                                time_val = pd.to_datetime(
-                                    ds_decoded.time.values[i])
-                                times.append(str(time_val))
-                    except:
-                        try:
-                            # Способ 2: Пробуем напрямую через pandas
-                            time_vals = pd.to_datetime(time_var.values)
-                            dataset_time = time_vals[0]
-                            if len(time_vals) > 1:
-                                for i in range(min(len(time_vals), 10)):
-                                    times.append(str(time_vals[i]))
-                        except:
-                            try:
-                                # Способ 3: Пробуем парсить атрибуты времени
-                                if hasattr(time_var, 'units'):
-                                    units = time_var.units
-                                    if 'hours since' in units or 'days since' in units:
-                                        try:
-                                            ref_date = pd.to_datetime(
-                                                units.split('since')[1].strip())
-                                            if 'hours' in units:
-                                                hours_offset = float(
-                                                    time_var.values[0])
-                                                dataset_time = ref_date + \
-                                                    pd.Timedelta(
-                                                        hours=hours_offset)
-                                            elif 'days' in units:
-                                                days_offset = float(
-                                                    time_var.values[0])
-                                                dataset_time = ref_date + \
-                                                    pd.Timedelta(
-                                                        days=days_offset)
-                                        except:
-                                            pass
-                            except:
-                                pass
+            # --- Универсальная обработка time / valid_time ---
+            if 'time' in ds_decoded.coords:
+                time_values = pd.to_datetime(ds_decoded.time.values).to_list()
 
-            elif 'valid_time' in ds.coords:
-                time_var = ds.valid_time
-                if time_var.size > 0:
-                    try:
-                        ds_decoded = xr.decode_cf(ds, decode_times=True)
-                        dataset_time = pd.to_datetime(
-                            ds_decoded.valid_time.values[0])
-                    except:
-                        try:
-                            time_vals = pd.to_datetime(time_var.values)
-                            dataset_time = time_vals[0]
-                        except:
-                            pass
+            elif 'valid_time' in ds_decoded.coords:
+                time_values = pd.to_datetime(
+                    ds_decoded.valid_time.values
+                ).to_list()
 
-            # Если не удалось получить время, пробуем извлечь из имени файла
-            if dataset_time is None:
-                # Пробуем найти дату в имени файла (например: ERA5_20240101.nc)
+            # --- fallback: дата из имени файла ---
+            if not time_values:
                 import re
-                date_pattern = r'(\d{4})[_-]?(\d{2})[_-]?(\d{2})'
-                match = re.search(date_pattern, file_name)
+                match = re.search(
+                    r'(\d{4})[_-]?(\d{2})[_-]?(\d{2})', file_name)
                 if match:
-                    year, month, day = match.groups()
-                    try:
-                        dataset_time = pd.Timestamp(f"{year}-{month}-{day}")
-                    except:
-                        dataset_time = pd.Timestamp(f"{year}-{month}-01")
+                    y, m, d = match.groups()
+                    time_values = [pd.Timestamp(f"{y}-{m}-{d}")]
 
-            # Если все еще None, используем время модификации файла как fallback
-            if dataset_time is None:
-                file_stat = os.stat(file_path)
-                dataset_time = pd.Timestamp.fromtimestamp(file_stat.st_mtime)
-                print(
-                    f"⚠ Используется время модификации файла для {Path(file_path).name}")
+            # --- fallback: mtime ---
+            if not time_values:
+                stat = os.stat(file_path)
+                time_values = [pd.Timestamp.fromtimestamp(stat.st_mtime)]
+                print(f"⚠ Используется mtime для {Path(file_path).name}")
 
-            # Получаем список переменных
+            dataset_time = time_values[0]  # репрезентативное
+
             variables = list(ds.data_vars.keys())
 
-            return dataset_type, dataset_time, variables, times
+            return dataset_type, dataset_time, variables, time_values
 
     except Exception as e:
         print(f"⚠ Ошибка при чтении {file_path}: {e}")
@@ -289,11 +234,15 @@ def update_database_index():
                 dataset_id = cursor.lastrowid
                 indexed_count += 1
 
-            for i, time_str in enumerate(times):
+            for i, t in enumerate(times):
                 cursor.execute("""
                     INSERT INTO dataset_times (dataset_id, time_value, time_index)
                     VALUES (?, ?, ?)
-                """, (dataset_id, time_str, i))
+                """, (
+                    dataset_id,
+                    t.isoformat(),
+                    i
+                ))
 
         conn.commit()
         conn.close()
@@ -665,6 +614,36 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
                 ds, 'u', x, y, z, time_idx=0, level_index=level_index)
             v_data = get_tile_data(
                 ds, 'v', x, y, z, time_idx=0, level_index=level_index)
+
+            tile_data = np.sqrt(u_data**2 + v_data**2)
+
+            if 'valid_time' in ds['u'].dims:
+                u_global = ds['u'].isel(valid_time=0).values
+                v_global = ds['v'].isel(valid_time=0).values
+            else:
+                u_global = ds['u'].values
+                v_global = ds['v'].values
+
+            wind_global = np.sqrt(u_global**2 + v_global**2)
+            vmin = np.nanpercentile(wind_global, 2)
+            vmax = np.nanpercentile(wind_global, 98)
+
+            cmap = get_panoply_colormap("NEO_modis_sst_45")
+        else:
+            tile_data = get_tile_data(ds, variable, x, y, z, time_idx=0)
+            vmin, vmax = global_vmin, global_vmax
+            cmap = get_panoply_colormap("NEO_modis_sst_45")
+
+    if variable == 'u10' or variable == 'v10':
+        var = ds[variable]
+        if 'u10' in ds and 'v10' in ds:
+            levels = var.pressure_level.values
+            level_index = None
+
+            u_data = get_tile_data(
+                ds, 'u', x, y, z, time_idx=0)
+            v_data = get_tile_data(
+                ds, 'v', x, y, z, time_idx=0)
 
             tile_data = np.sqrt(u_data**2 + v_data**2)
 

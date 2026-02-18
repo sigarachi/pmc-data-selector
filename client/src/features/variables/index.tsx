@@ -5,8 +5,8 @@ import { PRESSURE_LEVEL, VARIABLES } from "./constants";
 import { useSearchParams } from "react-router-dom";
 
 export const Variables = (): React.ReactElement => {
-  const [selected, setSelected] = useState<string>("");
-  const [pressure, setPressure] = useState<string>("");
+  const [selected, setSelected] = useState<string>("z");
+  const [pressure, setPressure] = useState<string>("250");
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -38,7 +38,15 @@ export const Variables = (): React.ReactElement => {
     if (searchPressure) {
       setPressure(searchPressure);
     }
-  }, [searchParams]);
+
+    if (selected && !searchVariable) {
+      handleSelect(selected);
+    }
+
+    if (pressure && !searchPressure) {
+      handlePressureSelect(pressure);
+    }
+  }, [selected, pressure, searchParams]);
 
   return (
     <PmcWrapperStyled>

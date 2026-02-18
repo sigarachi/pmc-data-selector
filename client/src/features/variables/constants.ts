@@ -7,6 +7,10 @@ export const VARIABLES = [
     title: "Ветер",
     value: "u",
   },
+  {
+    title: "Приземный ветер",
+    value: "u10",
+  },
 ];
 
 export const PRESSURE_LEVEL = [

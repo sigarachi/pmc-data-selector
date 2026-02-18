@@ -592,6 +592,19 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
 
     ds, global_vmin, global_vmax = open_nc_with_stats(filename, variable)
 
+    var = ds[variable]
+
+    times = var.valid_time.values
+    time_index = 0
+
+    for i, time_val in enumerate(times):
+        time_val = pd.to_datetime(time_val, format='%m/%d/%Y %H:%M')
+        time_diff = abs((time_val - time).total_seconds() / 3600)
+        if time_diff <= 1:
+            time_index = i
+            print(f"✓ Found {time} at index {i}")
+            break
+
     if variable == 'wind_speed' or variable == 'u' or variable == 'v':
         var = ds[variable]
         if 'u' in ds and 'v' in ds and 'pressure_level' in var.dims:
@@ -611,15 +624,15 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
                     f"! Using closest: index {level_index}, level {levels[level_index]} hPa")
 
             u_data = get_tile_data(
-                ds, 'u', x, y, z, time_idx=0, level_index=level_index)
+                ds, 'u', x, y, z, time_idx=time_index, level_index=level_index)
             v_data = get_tile_data(
-                ds, 'v', x, y, z, time_idx=0, level_index=level_index)
+                ds, 'v', x, y, z, time_idx=time_index, level_index=level_index)
 
             tile_data = np.sqrt(u_data**2 + v_data**2)
 
             if 'valid_time' in ds['u'].dims:
-                u_global = ds['u'].isel(valid_time=0).values
-                v_global = ds['v'].isel(valid_time=0).values
+                u_global = ds['u'].isel(valid_time=time_index).values
+                v_global = ds['v'].isel(valid_time=time_index).values
             else:
                 u_global = ds['u'].values
                 v_global = ds['v'].values
@@ -639,15 +652,15 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
         if 'u10' in ds and 'v10' in ds:
 
             u_data = get_tile_data(
-                ds, 'u', x, y, z, time_idx=0)
+                ds, 'u', x, y, z, time_idx=time_index)
             v_data = get_tile_data(
-                ds, 'v', x, y, z, time_idx=0)
+                ds, 'v', x, y, z, time_idx=time_index)
 
             tile_data = np.sqrt(u_data**2 + v_data**2)
 
             if 'valid_time' in ds['u'].dims:
-                u_global = ds['u'].isel(valid_time=0).values
-                v_global = ds['v'].isel(valid_time=0).values
+                u_global = ds['u'].isel(valid_time=time_index).values
+                v_global = ds['v'].isel(valid_time=time_index).values
             else:
                 u_global = ds['u'].values
                 v_global = ds['v'].values
@@ -682,11 +695,11 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
                     f"! Using closest: index {level_index}, level {levels[level_index]} hPa")
 
             tile_data = get_tile_data(
-                ds, variable, x, y, z, time_idx=0, level_index=level_index)
+                ds, variable, x, y, z, time_idx=time_index, level_index=level_index)
 
             if 'valid_time' in var.dims:
                 level_data = var.isel(
-                    valid_time=0, pressure_level=level_index).values
+                    valid_time=time_index, pressure_level=level_index).values
             else:
                 level_data = var.isel(pressure_level=level_index).values
 
@@ -697,7 +710,8 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
                 f"Geopotential at {pressure_level}hPa: {vmin:.2f} - {vmax:.2f}")
             cmap = get_panoply_colormap("NEO_modis_sst_45")
         else:
-            tile_data = get_tile_data(ds, variable, x, y, z, time_idx=0)
+            tile_data = get_tile_data(
+                ds, variable, x, y, z, time_idx=time_index)
             vmin, vmax = global_vmin, global_vmax
             cmap = get_panoply_colormap("NEO_modis_sst_45")
 

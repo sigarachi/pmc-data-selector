@@ -15,18 +15,26 @@ from scipy.interpolate import RegularGridInterpolator
 import pandas as pd
 import glob
 import os
+import psycopg
+import json
+from contextlib import contextmanager
+from environs import Env
+import os
+
 
 from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
 
 app = FastAPI()
+
+env = Env()
+env.read_env()
 
 DATASET_CACHE: Dict[str, Tuple[xr.Dataset, float]] = {}
 STATS_CACHE: Dict[str, Dict[str, Tuple[float, float]]] = {}
 CACHE_LOCK = threading.RLock()
 MAX_CACHE_SIZE = 3
 CACHE_TTL = 300
-
-DB_PATH = Path("./data/datasets_index.db")
+DB_DSN = os.environ.get('DB_URL')
 
 datasets = {}
 
@@ -39,68 +47,49 @@ app.add_middleware(
 )
 
 
+@contextmanager
+def get_conn():
+    with psycopg.connect(DB_DSN) as conn:
+        yield conn
+
+
 def init_database():
-    """Инициализирует базу данных и создает таблицы если их нет"""
-    try:
-        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
 
-        conn = sqlite3.connect(str(DB_PATH))
-        cursor = conn.cursor()
-
-        # Создаем таблицу для индексации файлов
-        cursor.execute("""
+            cur.execute("""
             CREATE TABLE IF NOT EXISTS datasets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id BIGSERIAL PRIMARY KEY,
                 file_path TEXT UNIQUE NOT NULL,
                 file_name TEXT NOT NULL,
                 dataset_type TEXT NOT NULL,
-                dataset_time TEXT NOT NULL,
-                file_size INTEGER NOT NULL,
-                last_modified REAL NOT NULL,
+                dataset_time TIMESTAMP NOT NULL,
+                file_size BIGINT NOT NULL,
+                last_modified DOUBLE PRECISION NOT NULL,
                 variable_count INTEGER,
-                variables TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                variables JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+            """)
 
-        # Создаем таблицу для временных меток
-        cursor.execute("""
+            cur.execute("""
             CREATE TABLE IF NOT EXISTS dataset_times (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                dataset_id INTEGER NOT NULL,
-                time_value TEXT NOT NULL,
-                time_index INTEGER NOT NULL,
-                FOREIGN KEY (dataset_id) REFERENCES datasets (id) ON DELETE CASCADE
+                id BIGSERIAL PRIMARY KEY,
+                dataset_id BIGINT REFERENCES datasets(id) ON DELETE CASCADE,
+                time_value TIMESTAMP NOT NULL,
+                time_index INTEGER NOT NULL
             )
-        """)
+            """)
 
-        # Создаем индексы отдельно от создания таблиц
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_dataset_type_time 
-            ON datasets (dataset_type, dataset_time)
-        """)
+            cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_dataset_type_time
+            ON datasets(dataset_type, dataset_time)
+            """)
 
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_dataset_file_path 
-            ON datasets (file_path)
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_dataset_times_dataset_time 
-            ON dataset_times (dataset_id, time_value)
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_datasets_type_time ON datasets(dataset_type, dataset_time)
-        """)
-
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        print(f"Ошибка инициализации базы данных: {e}")
-        import traceback
-        traceback.print_exc()
+            cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_dataset_times_dataset_time
+            ON dataset_times(dataset_id, time_value)
+            """)
 
 
 def extract_dataset_info(
@@ -162,204 +151,170 @@ def extract_dataset_info(
 
 
 def update_database_index():
-    """Обновляет индекс файлов в базе данных"""
-    try:
-        nc_files = glob.glob('./data/*.nc')
+    nc_files = glob.glob('./data/*.nc')
 
-        conn = sqlite3.connect(str(DB_PATH))
-        cursor = conn.cursor()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
 
-        indexed_count = 0
-        updated_count = 0
+            for file_path in nc_files:
+                file_path = str(Path(file_path).resolve())
+                stat = os.stat(file_path)
 
-        for file_path in nc_files:
-            file_path = str(Path(file_path).resolve())
-            file_stat = os.stat(file_path)
+                cur.execute(
+                    "SELECT id, last_modified FROM datasets WHERE file_path=%s",
+                    (file_path,)
+                )
 
-            cursor.execute(
-                "SELECT id, last_modified FROM datasets WHERE file_path = ?",
-                (file_path,)
-            )
-            result = cursor.fetchone()
+                row = cur.fetchone()
 
-            if result and abs(result[1] - file_stat.st_mtime) < 1:
-                continue
+                if row and abs(row[1] - stat.st_mtime) < 1:
+                    continue
 
-            dataset_type, dataset_time, variables, times = extract_dataset_info(
-                file_path)
+                dataset_type, dataset_time, variables, times = extract_dataset_info(
+                    file_path)
 
-            if dataset_time is None:
-                print(f"Не удалось извлечь время из {Path(file_path).name}")
-                continue
+                if dataset_time is None:
+                    continue
 
-            variables_json = '[' + ','.join(f'"{v}"' for v in variables) + ']'
+                variables_json = json.dumps(variables)
 
-            if result:
-                dataset_id = result[0]
-                cursor.execute("""
-                    UPDATE datasets 
-                    SET dataset_type = ?, dataset_time = ?, 
-                        file_size = ?, last_modified = ?,
-                        variable_count = ?, variables = ?
-                    WHERE id = ?
-                """, (
-                    dataset_type,
-                    dataset_time.isoformat(),
-                    file_stat.st_size,
-                    file_stat.st_mtime,
-                    len(variables),
-                    variables_json,
-                    dataset_id
-                ))
+                if row:
+                    dataset_id = row[0]
 
-                cursor.execute(
-                    "DELETE FROM dataset_times WHERE dataset_id = ?", (dataset_id,))
-                updated_count += 1
-            else:
-                cursor.execute("""
-                    INSERT INTO datasets 
-                    (file_path, file_name, dataset_type, dataset_time, 
-                     file_size, last_modified, variable_count, variables)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    file_path,
-                    Path(file_path).name,
-                    dataset_type,
-                    dataset_time.isoformat(),
-                    file_stat.st_size,
-                    file_stat.st_mtime,
-                    len(variables),
-                    variables_json
-                ))
-                dataset_id = cursor.lastrowid
-                indexed_count += 1
+                    cur.execute("""
+                        UPDATE datasets
+                        SET dataset_type=%s,
+                            dataset_time=%s,
+                            file_size=%s,
+                            last_modified=%s,
+                            variable_count=%s,
+                            variables=%s
+                        WHERE id=%s
+                    """, (
+                        dataset_type,
+                        dataset_time,
+                        stat.st_size,
+                        stat.st_mtime,
+                        len(variables),
+                        variables_json,
+                        dataset_id
+                    ))
 
-            for i, t in enumerate(times):
-                cursor.execute("""
-                    INSERT INTO dataset_times (dataset_id, time_value, time_index)
-                    VALUES (?, ?, ?)
-                """, (
-                    dataset_id,
-                    t.isoformat(),
-                    i
-                ))
+                    cur.execute(
+                        "DELETE FROM dataset_times WHERE dataset_id=%s",
+                        (dataset_id,)
+                    )
 
-        conn.commit()
-        conn.close()
+                else:
+                    cur.execute("""
+                        INSERT INTO datasets
+                        (file_path, file_name, dataset_type, dataset_time,
+                         file_size, last_modified, variable_count, variables)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                        RETURNING id
+                    """, (
+                        file_path,
+                        Path(file_path).name,
+                        dataset_type,
+                        dataset_time,
+                        stat.st_size,
+                        stat.st_mtime,
+                        len(variables),
+                        variables_json
+                    ))
 
-    except Exception as e:
-        print(f"Ошибка индексации: {e}")
-        import traceback
-        traceback.print_exc()
+                    dataset_id = cur.fetchone()[0]
+
+                for i, t in enumerate(times):
+                    cur.execute("""
+                        INSERT INTO dataset_times(dataset_id, time_value, time_index)
+                        VALUES (%s,%s,%s)
+                    """, (dataset_id, t, i))
 
 
-def find_matching_dataset_by_time(pmc_time: pd.Timestamp,
-                                  dataset_type: str = "era5",
-                                  time_tolerance_hours: float = 3) -> Optional[Tuple[str, pd.Timestamp, float]]:
-    try:
-        target_time_str = pmc_time.isoformat(sep=' ')
-        tolerance_seconds = time_tolerance_hours * 3600
+def find_matching_dataset_by_time(pmc_time, dataset_type="era5", time_tolerance_hours=3):
 
-        with sqlite3.connect(str(DB_PATH)) as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT 
-                    file_path, 
-                    dataset_time
-                FROM datasets 
-                WHERE dataset_type = ?
-                ORDER BY ABS(julianday(dataset_time) - julianday(?))
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+
+            cur.execute("""
+                SELECT file_path, dataset_time
+                FROM datasets
+                WHERE dataset_type=%s
+                ORDER BY ABS(EXTRACT(EPOCH FROM (dataset_time - %s)))
                 LIMIT 1
-            """, (dataset_type, target_time_str))
+            """, (dataset_type, pmc_time))
 
-            row = cursor.fetchone()
+            row = cur.fetchone()
 
             if row:
-                file_time = pd.to_datetime(row['dataset_time'])
-                time_diff = abs((pmc_time - file_time).total_seconds() / 3600)
+                file_path, file_time = row
+                diff = abs((pmc_time - file_time).total_seconds() / 3600)
 
-                if time_diff <= time_tolerance_hours:
-                    return (row['file_path'], file_time, time_diff)
+                if diff <= time_tolerance_hours:
+                    return file_path, file_time, diff
 
-        return find_in_times_table(pmc_time, dataset_type, time_tolerance_hours)
-
-    except Exception as e:
-        print(f"Ошибка поиска в базе данных: {e}")
-        return None
+    return find_in_times_table(pmc_time, dataset_type, time_tolerance_hours)
 
 
-def find_in_times_table(pmc_time: pd.Timestamp,
-                        dataset_type: str = "era5",
-                        time_tolerance_hours: float = 3) -> Optional[Tuple[str, pd.Timestamp, float]]:
-    try:
-        conn = sqlite3.connect(str(DB_PATH))
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+def find_in_times_table(pmc_time, dataset_type="era5", time_tolerance_hours=3):
 
-        cursor.execute("""
-            SELECT d.file_path, dt.time_value
-            FROM datasets d
-            JOIN dataset_times dt ON d.id = dt.dataset_id
-            WHERE d.dataset_type = ?
-            ORDER BY dt.time_index
-        """, (dataset_type,))
+    with get_conn() as conn:
+        with conn.cursor() as cur:
 
-        best_match = None
-        min_time_diff = float('inf')
+            cur.execute("""
+                SELECT d.file_path, dt.time_value
+                FROM datasets d
+                JOIN dataset_times dt ON d.id = dt.dataset_id
+                WHERE d.dataset_type=%s
+            """, (dataset_type,))
 
-        for row in cursor.fetchall():
-            try:
-                file_time = pd.to_datetime(row['time_value'])
-                time_diff = abs((pmc_time - file_time).total_seconds() / 3600)
+            best = None
+            best_diff = 1e9
 
-                if time_diff <= time_tolerance_hours and time_diff < min_time_diff:
-                    min_time_diff = time_diff
-                    best_match = (row['file_path'], file_time)
+            for file_path, file_time in cur.fetchall():
+                diff = abs((pmc_time - file_time).total_seconds() / 3600)
 
-            except Exception as e:
-                continue
+                if diff <= time_tolerance_hours and diff < best_diff:
+                    best = (file_path, file_time)
+                    best_diff = diff
 
-        conn.close()
+            if best:
+                return best[0], best[1], best_diff
 
-        if best_match:
-            return (best_match[0], best_match[1], min_time_diff)
-
-        return None
-
-    except Exception as e:
-        print(f"Ошибка поиска во временных метках: {e}")
-        return None
+    return None
 
 
 @app.on_event("startup")
 async def startup_event():
     """Инициализация при запуске"""
+
     try:
         init_database()
-
         update_database_index()
 
-        conn = sqlite3.connect(str(DB_PATH))
-        cursor = conn.cursor()
+        with get_conn() as conn:
+            with conn.cursor() as cur:
 
-        cursor.execute("SELECT COUNT(*) FROM datasets")
-        total_files = cursor.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM datasets")
+                total_files = cur.fetchone()[0]
 
-        cursor.execute("SELECT COUNT(DISTINCT dataset_type) FROM datasets")
-        types_count = cursor.fetchone()[0]
+                cur.execute(
+                    "SELECT COUNT(DISTINCT dataset_type) FROM datasets")
+                types_count = cur.fetchone()[0]
 
-        cursor.execute("""
-            SELECT dataset_type, COUNT(*) as count 
-            FROM datasets 
-            GROUP BY dataset_type
-        """)
-        type_stats = cursor.fetchall()
-
-        conn.close()
+                cur.execute("""
+                    SELECT dataset_type, COUNT(*)
+                    FROM datasets
+                    GROUP BY dataset_type
+                """)
+                type_stats = cur.fetchall()
 
         print(f"Всего файлов: {total_files}")
         print(f"Типов данных: {types_count}")
+
+        for dtype, count in type_stats:
+            print(f"{dtype}: {count}")
 
     except Exception as e:
         print(f"Ошибка при инициализации: {e}")
@@ -558,7 +513,7 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
         interp = RegularGridInterpolator(
             (lats, lons),
             data,
-            method="linear",
+            method="nearest",
             bounds_error=False,
             fill_value=np.nan
         )
@@ -577,10 +532,8 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
 
 # variable: str, t: int = 0
 
-
 @app.get("/tile/{z}/{x}/{y}")
 def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
-
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
     ds_file = find_matching_dataset_by_time(
         time, dataset_type="era5", time_tolerance_hours=1)

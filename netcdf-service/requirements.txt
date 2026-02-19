@@ -7,3 +7,7 @@ scipy
 pandas
 mercantile
 netcdf4
+environs
+contextlib
+psycopg
+psycopg[binaries]

@@ -13,6 +13,15 @@ export const TimelineWrapperStyled = styled.div`
   height: fit-content;
 
   z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+`;
+
+export const TimeWrapperStyled = styled.div`
+  width: 100%;
   gap: 8px;
 
   overflow-x: auto;
@@ -34,4 +43,9 @@ export const TimelineWrapperStyled = styled.div`
 
     cursor: pointer;
   }
+`;
+
+export const LineWrapperStyled = styled.div`
+  display: flex;
+  flex-direction: row;
 `;

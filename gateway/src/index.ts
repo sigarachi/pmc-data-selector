@@ -52,7 +52,7 @@ services.forEach(({ route, target }) => {
     pathRewrite: {
       [`^${route}`]: "",
     },
-    proxyTimeout: 10000,
+    proxyTimeout: 1000000,
     headers: {
       Connection: "keep-alive",
     },

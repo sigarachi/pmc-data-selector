@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.concurrency import run_in_threadpool
 import xarray as xr
 import numpy as np
 from PIL import Image
@@ -17,14 +18,28 @@ import glob
 import os
 import psycopg
 import json
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from environs import Env
 import os
+import psycopg_pool
 
 
 from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
 
-app = FastAPI()
+pool = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global pool
+
+    pool = psycopg_pool.AsyncConnectionPool(DB_DSN)
+
+    yield
+
+    await pool.close()
+
+app = FastAPI(lifespan=lifespan)
 
 env = Env()
 env.read_env()
@@ -47,17 +62,17 @@ app.add_middleware(
 )
 
 
-@contextmanager
-def get_conn():
-    with psycopg.connect(DB_DSN) as conn:
+@asynccontextmanager
+async def get_conn():
+    async with pool.connection() as conn:
         yield conn
 
 
-def init_database():
-    with get_conn() as conn:
-        with conn.cursor() as cur:
+async def init_database():
+    async with get_conn() as conn:
+        async with conn.cursor() as cur:
 
-            cur.execute("""
+            await cur.execute("""
             CREATE TABLE IF NOT EXISTS datasets (
                 id BIGSERIAL PRIMARY KEY,
                 file_path TEXT UNIQUE NOT NULL,
@@ -72,7 +87,7 @@ def init_database():
             )
             """)
 
-            cur.execute("""
+            await cur.execute("""
             CREATE TABLE IF NOT EXISTS dataset_times (
                 id BIGSERIAL PRIMARY KEY,
                 dataset_id BIGINT REFERENCES datasets(id) ON DELETE CASCADE,
@@ -81,18 +96,18 @@ def init_database():
             )
             """)
 
-            cur.execute("""
+            await cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_dataset_type_time
             ON datasets(dataset_type, dataset_time)
             """)
 
-            cur.execute("""
+            await cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_dataset_times_dataset_time
             ON dataset_times(dataset_id, time_value)
             """)
 
 
-def extract_dataset_info(
+def _extract_dataset_info(
     file_path: str
 ) -> Tuple[Optional[str], Optional[pd.Timestamp], List[str], List[pd.Timestamp]]:
     """Извлекает информацию о датасете из NetCDF файла"""
@@ -150,27 +165,31 @@ def extract_dataset_info(
         return None, None, [], []
 
 
-def update_database_index():
+async def extract_dataset_info(file_path: str):
+    return await run_in_threadpool(_extract_dataset_info, file_path)
+
+
+async def update_database_index():
     nc_files = glob.glob('./data/*.nc')
 
-    with get_conn() as conn:
-        with conn.cursor() as cur:
+    async with get_conn() as conn:
+        async with conn.cursor() as cur:
 
             for file_path in nc_files:
                 file_path = str(Path(file_path).resolve())
                 stat = os.stat(file_path)
 
-                cur.execute(
+                await cur.execute(
                     "SELECT id, last_modified FROM datasets WHERE file_path=%s",
                     (file_path,)
                 )
 
-                row = cur.fetchone()
+                row = await cur.fetchone()
 
                 if row and abs(row[1] - stat.st_mtime) < 1:
                     continue
 
-                dataset_type, dataset_time, variables, times = extract_dataset_info(
+                dataset_type, dataset_time, variables, times = await extract_dataset_info(
                     file_path)
 
                 if dataset_time is None:
@@ -181,7 +200,7 @@ def update_database_index():
                 if row:
                     dataset_id = row[0]
 
-                    cur.execute("""
+                    await cur.execute("""
                         UPDATE datasets
                         SET dataset_type=%s,
                             dataset_time=%s,
@@ -200,13 +219,13 @@ def update_database_index():
                         dataset_id
                     ))
 
-                    cur.execute(
+                    await cur.execute(
                         "DELETE FROM dataset_times WHERE dataset_id=%s",
                         (dataset_id,)
                     )
 
                 else:
-                    cur.execute("""
+                    await cur.execute("""
                         INSERT INTO datasets
                         (file_path, file_name, dataset_type, dataset_time,
                          file_size, last_modified, variable_count, variables)
@@ -223,21 +242,19 @@ def update_database_index():
                         variables_json
                     ))
 
-                    dataset_id = cur.fetchone()[0]
+                    dataset_id = await cur.fetchone()[0]
 
                 for i, t in enumerate(times):
-                    cur.execute("""
+                    await cur.execute("""
                         INSERT INTO dataset_times(dataset_id, time_value, time_index)
                         VALUES (%s,%s,%s)
                     """, (dataset_id, t, i))
 
 
-def find_matching_dataset_by_time(pmc_time, dataset_type="era5", time_tolerance_hours=3):
-
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-
-            cur.execute("""
+async def find_matching_dataset_by_time(pmc_time, dataset_type="era5", time_tolerance_hours=3):
+    async with get_conn() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
                 SELECT file_path, dataset_time
                 FROM datasets
                 WHERE dataset_type=%s
@@ -245,34 +262,34 @@ def find_matching_dataset_by_time(pmc_time, dataset_type="era5", time_tolerance_
                 LIMIT 1
             """, (dataset_type, pmc_time))
 
-            row = cur.fetchone()
+            row = await cur.fetchone()
 
             if row:
                 file_path, file_time = row
                 diff = abs((pmc_time - file_time).total_seconds() / 3600)
-
                 if diff <= time_tolerance_hours:
                     return file_path, file_time, diff
 
-    return find_in_times_table(pmc_time, dataset_type, time_tolerance_hours)
+    return await find_in_times_table(pmc_time, dataset_type, time_tolerance_hours)
 
 
-def find_in_times_table(pmc_time, dataset_type="era5", time_tolerance_hours=3):
+async def find_in_times_table(pmc_time, dataset_type="era5", time_tolerance_hours=3):
 
-    with get_conn() as conn:
-        with conn.cursor() as cur:
+    async with get_conn() as conn:
+        async with conn.cursor() as cur:
 
-            cur.execute("""
+            await cur.execute("""
                 SELECT d.file_path, dt.time_value
                 FROM datasets d
                 JOIN dataset_times dt ON d.id = dt.dataset_id
                 WHERE d.dataset_type=%s
             """, (dataset_type,))
 
+            rows = await cur.fetchall()
             best = None
             best_diff = 1e9
 
-            for file_path, file_time in cur.fetchall():
+            for file_path, file_time in rows:
                 diff = abs((pmc_time - file_time).total_seconds() / 3600)
 
                 if diff <= time_tolerance_hours and diff < best_diff:
@@ -290,25 +307,25 @@ async def startup_event():
     """Инициализация при запуске"""
 
     try:
-        init_database()
-        update_database_index()
+        await init_database()
+        await update_database_index()
 
-        with get_conn() as conn:
-            with conn.cursor() as cur:
+        async with get_conn() as conn:
+            async with conn.cursor() as cur:
 
-                cur.execute("SELECT COUNT(*) FROM datasets")
-                total_files = cur.fetchone()[0]
+                await cur.execute("SELECT COUNT(*) FROM datasets")
+                total_files = await cur.fetchone()[0]
 
-                cur.execute(
+                await cur.execute(
                     "SELECT COUNT(DISTINCT dataset_type) FROM datasets")
-                types_count = cur.fetchone()[0]
+                types_count = await cur.fetchone()[0]
 
-                cur.execute("""
+                await cur.execute("""
                     SELECT dataset_type, COUNT(*)
                     FROM datasets
                     GROUP BY dataset_type
                 """)
-                type_stats = cur.fetchall()
+                type_stats = await cur.fetchall()
 
         print(f"Всего файлов: {total_files}")
         print(f"Типов данных: {types_count}")
@@ -533,9 +550,9 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
 # variable: str, t: int = 0
 
 @app.get("/tile/{z}/{x}/{y}")
-def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
+async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
-    ds_file = find_matching_dataset_by_time(
+    ds_file = await find_matching_dataset_by_time(
         time, dataset_type="era5", time_tolerance_hours=1)
 
     if ds_file is None or variable is None:
@@ -543,7 +560,9 @@ def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int =
 
     filename, dataset, time_diff = ds_file
 
-    ds, global_vmin, global_vmax = open_nc_with_stats(filename, variable)
+    ds, global_vmin, global_vmax = await run_in_threadpool(
+        open_nc_with_stats, filename, variable
+    )
 
     var = ds[variable]
 

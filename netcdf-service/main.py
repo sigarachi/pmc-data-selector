@@ -22,11 +22,14 @@ from contextlib import asynccontextmanager
 from environs import Env
 import os
 import psycopg_pool
+import asyncio
 
 
 from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
 
 pool = None
+
+nc_lock = asyncio.Lock()
 
 
 @asynccontextmanager
@@ -560,9 +563,10 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
 
     filename, dataset, time_diff = ds_file
 
-    ds, global_vmin, global_vmax = await run_in_threadpool(
-        open_nc_with_stats, filename, variable
-    )
+    async with nc_lock:
+        ds, global_vmin, global_vmax = await run_in_threadpool(
+            open_nc_with_stats, filename, variable
+        )
 
     var = ds[variable]
 

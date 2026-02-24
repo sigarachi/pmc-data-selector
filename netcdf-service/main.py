@@ -1,3 +1,4 @@
+from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,9 +24,11 @@ from environs import Env
 import os
 import psycopg_pool
 import asyncio
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
 
 pool = None
 
@@ -37,6 +40,8 @@ async def lifespan(app: FastAPI):
     global pool
 
     pool = psycopg_pool.AsyncConnectionPool(DB_DSN)
+
+    await startup_event()
 
     yield
 
@@ -72,6 +77,7 @@ async def get_conn():
 
 
 async def init_database():
+    logger.info("Инициализация бд")
     async with get_conn() as conn:
         async with conn.cursor() as cur:
 
@@ -244,8 +250,8 @@ async def update_database_index():
                         len(variables),
                         variables_json
                     ))
-
-                    dataset_id = await cur.fetchone()[0]
+                    row = await cur.fetchone()
+                    dataset_id = row[0]
 
                 for i, t in enumerate(times):
                     await cur.execute("""
@@ -308,7 +314,7 @@ async def find_in_times_table(pmc_time, dataset_type="era5", time_tolerance_hour
 @app.on_event("startup")
 async def startup_event():
     """Инициализация при запуске"""
-
+    logger.info("Запуск startup события...")
     try:
         await init_database()
         await update_database_index()
@@ -317,11 +323,13 @@ async def startup_event():
             async with conn.cursor() as cur:
 
                 await cur.execute("SELECT COUNT(*) FROM datasets")
-                total_files = await cur.fetchone()[0]
+                row = await cur.fetchone()
+                total_files = row[0]
 
                 await cur.execute(
                     "SELECT COUNT(DISTINCT dataset_type) FROM datasets")
-                types_count = await cur.fetchone()[0]
+                count_row = await cur.fetchone()
+                types_count = count_row[0]
 
                 await cur.execute("""
                     SELECT dataset_type, COUNT(*)
@@ -377,8 +385,8 @@ def open_nc_dataset(path: str) -> xr.Dataset:
     ds = xr.open_dataset(
         path,
         engine="netcdf4",
-        chunks={},
-        cache=False
+        # chunks={},
+        cache=True
     )
 
     return ds

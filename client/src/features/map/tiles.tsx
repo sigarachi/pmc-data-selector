@@ -2,7 +2,6 @@ import type { ParamFilters } from "@shared/api/models/param";
 import { ParamService } from "@shared/api/services/param";
 import { Loader } from "@shared/components/loader";
 import { options } from "@shared/config";
-import { getRandomColor } from "@shared/utils/get-random-color";
 import { useQuery } from "@tanstack/react-query";
 import { useToggle } from "@university-ecosystem/ui-kit";
 import { useEffect, useState } from "react";
@@ -76,7 +75,7 @@ export const Tiles = () => {
               <CircleMarker
                 center={item.value.trim().split(",").reverse()}
                 pathOptions={{
-                  fillColor: getRandomColor(),
+                  fillColor: "white",
                 }}
               >
                 <Popup>{item.name}</Popup>

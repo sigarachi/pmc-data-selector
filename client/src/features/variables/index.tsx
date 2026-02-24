@@ -60,7 +60,7 @@ export const Variables = (): React.ReactElement => {
         ))}
       </select>
 
-      {selected && (
+      {selected !== "u10" && (
         <select
           value={pressure}
           onChange={(event) => handlePressureSelect(event.target.value)}

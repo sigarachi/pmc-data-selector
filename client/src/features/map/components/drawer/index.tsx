@@ -18,7 +18,7 @@ export const Drawer = () => {
     click: (e) => {
       if (currentMarker) {
         let newPositions: Array<Array<number>> = [];
-        if (currentMarker.type === "polygon") {
+        if (currentMarker.type === "poly") {
           newPositions = [...positions, [e.latlng.lat, e.latlng.lng]];
         }
         if (currentMarker.type === "point") {
@@ -42,7 +42,7 @@ export const Drawer = () => {
     <>
       {currentMarker && (
         <>
-          {currentMarker.type === "polygon" && (
+          {currentMarker.type === "poly" && (
             <>
               <Polygon positions={positions} />
               {positions.map((pos, index) => (

@@ -1,25 +1,24 @@
+import type { Marker, MarkerType } from "@shared/api/models/marker";
 import { create } from "zustand";
 
-export type Brush = "point" | "polygon";
-
-export type Marker = {
-  type: Brush;
-  polygons: Array<Array<number>>;
+export type StoreMarker = Omit<Marker, "id"> & {
+  id?: string;
 };
 
 export interface DrawStore {
-  brush: Brush;
-  markers: Marker[];
+  brush: MarkerType;
+  markers: StoreMarker[];
   currentMarkerIdx: number | null;
-  currentMarker?: Marker;
+  currentMarker?: StoreMarker;
 }
 
 export interface DrawActions {
-  changeBrush: (brush: Brush) => void;
-  addMarker: (marker: Marker) => void;
+  changeBrush: (brush: MarkerType) => void;
+  addMarker: (marker: StoreMarker) => void;
   setCurrentMarker: (index?: number) => void;
   updatePolygons: (polygons: Array<Array<number>>) => void;
   removeMarker: (index: number) => void;
+  setMarkers: (markers: Array<StoreMarker>) => void;
   reset: () => void;
 }
 
@@ -35,6 +34,7 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
   changeBrush: (brush) => set(() => ({ brush })),
   addMarker: (marker) =>
     set((state) => ({ markers: [...state.markers, marker] })),
+  setMarkers: (markers) => set(() => ({ markers })),
   setCurrentMarker: (index) =>
     set((state) => {
       if (isNaN(Number(index))) {

@@ -40,6 +40,8 @@ model Marker {
   name String
   type MarkerType
 
+  polygons Json @default("{}")
+
   layerId String @db.Uuid
   layer   Layer  @relation(fields: [layerId], references: [id], onDelete: Cascade)
 }

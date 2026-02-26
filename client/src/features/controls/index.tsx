@@ -1,7 +1,6 @@
 import { ColorLegend } from "@features/controls/components/palette";
 import { useEffect, useState } from "react";
 import { Outlet, useSearchParams } from "react-router-dom";
-import { SideBar } from "./components/sidebar";
 import { Buttons } from "./components/buttons";
 import { BottomWrapperStyled } from "./controls.style";
 import { Timeline } from "./components/timeline";

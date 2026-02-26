@@ -39,7 +39,7 @@ export const PmcData = () => {
       </Text>
 
       {options.map((item) => (
-        <Text variant="body1">
+        <Text variant="body1" key={item.value}>
           {item.name} : {item.value}
         </Text>
       ))}

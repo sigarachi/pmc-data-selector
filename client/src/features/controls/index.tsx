@@ -1,17 +1,24 @@
-import { PmcData } from "@features/pmc-data";
-import { PmcSelector } from "@features/pmc-selector";
-import { Timeline } from "@features/timeline";
-import { Variables } from "@features/variables";
-import { ControlsWrapperStyled } from "./controls.style";
-import { ColorLegend } from "@features/palette";
+import { ColorLegend } from "@features/controls/components/palette";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Outlet, useSearchParams } from "react-router-dom";
+import { SideBar } from "./components/sidebar";
+import { Buttons } from "./components/buttons";
+import { BottomWrapperStyled } from "./controls.style";
+import { Timeline } from "./components/timeline";
 
 export const Controls = () => {
   const [pressure, setPressure] = useState("250");
-  const [variable, setVariable] = useState<string>("u10");
+  const [variable, setVariable] = useState<string>("z");
 
   const [searchParams] = useSearchParams();
+
+  const hideTimeLine =
+    !searchParams.get("showTimeline") ||
+    searchParams.get("showTimeline") === "false";
+
+  const hideLegend =
+    !searchParams.get("showLegend") ||
+    searchParams.get("showLegend") === "false";
 
   useEffect(() => {
     const searchPressure = searchParams.get("pressure");
@@ -28,13 +35,14 @@ export const Controls = () => {
 
   return (
     <>
-      <ColorLegend pressure={Number(pressure)} variable={variable} />
-      <ControlsWrapperStyled>
-        <PmcSelector />
-        <PmcData />
-        <Variables />
-      </ControlsWrapperStyled>
-      <Timeline />
+      <Buttons />
+      <Outlet />
+      <BottomWrapperStyled>
+        {!hideLegend && (
+          <ColorLegend pressure={Number(pressure)} variable={variable} />
+        )}
+        {!hideTimeLine && <Timeline />}
+      </BottomWrapperStyled>
     </>
   );
 };

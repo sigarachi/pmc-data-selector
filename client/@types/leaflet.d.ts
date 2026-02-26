@@ -10,4 +10,13 @@ declare module "react-leaflet" {
   export interface TileLayerProps {
     opacity?: number;
   }
+
+  export interface PolylineProps {
+    color: string;
+    weight: number;
+  }
+
+  export interface CircleProps {
+    radius: number;
+  }
 }

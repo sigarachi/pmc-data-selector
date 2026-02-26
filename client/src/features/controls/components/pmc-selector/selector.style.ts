@@ -7,7 +7,7 @@ export const PmcWrapperStyled = styled.div`
 
   border-radius: 16px;
 
-  background-color: white;
+  /* background-color: white; */
 
   display: flex;
   flex-direction: column;

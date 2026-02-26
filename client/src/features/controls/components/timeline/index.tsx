@@ -1,5 +1,5 @@
 import { getTimeArray } from "@shared/utils/get-time-array";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   LineWrapperStyled,
   TimelineWrapperStyled,
@@ -117,7 +117,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
     <TimelineWrapperStyled>
       <TimeWrapperStyled>
         {dateOptions.map((item) => (
-          <>
+          <Fragment key={item}>
             <Badge
               variant={item === dateSelected ? "filled" : "outlined"}
               text={new Date(item).toLocaleDateString("ru-RU", {
@@ -127,7 +127,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
               })}
               onClick={() => handleSelectDate(item)}
             />
-          </>
+          </Fragment>
         ))}
       </TimeWrapperStyled>
       <LineWrapperStyled>
@@ -140,6 +140,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
         <TimeWrapperStyled>
           {timeLine.map((item) => (
             <Badge
+              key={item}
               variant={item === selected ? "filled" : "outlined"}
               text={item}
               color="primary"

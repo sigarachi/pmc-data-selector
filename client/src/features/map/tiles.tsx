@@ -1,15 +1,16 @@
+import { Drawer } from "@features/map/components/drawer";
 import type { ParamFilters } from "@shared/api/models/param";
 import { ParamService } from "@shared/api/services/param";
 import { Loader } from "@shared/components/loader";
 import { options } from "@shared/config";
 import { useQuery } from "@tanstack/react-query";
 import { useToggle } from "@university-ecosystem/ui-kit";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { CircleMarker, Popup, TileLayer } from "react-leaflet";
 import { useParams, useSearchParams } from "react-router-dom";
 
 export const Tiles = () => {
-  const { id = "" } = useParams();
+  const { id = "", layerId = "" } = useParams();
   const [searchParams] = useSearchParams();
 
   const [time, setTime] = useState<string>("");
@@ -52,6 +53,7 @@ export const Tiles = () => {
     <>
       {isLoading && <Loader />}
       <TileLayer url="https://{s}.tile.osm.org/{z}/{x}/{y}.png" />
+      {layerId && <Drawer />}
       {variable && (
         <TileLayer
           opacity={0.7}
@@ -70,9 +72,10 @@ export const Tiles = () => {
       )}
       {data?.params &&
         data.params.map((item) => (
-          <>
+          <Fragment key={item.id}>
             {item.value && (
               <CircleMarker
+                key={item.id}
                 center={item.value.trim().split(",").reverse()}
                 pathOptions={{
                   fillColor: "white",
@@ -81,7 +84,7 @@ export const Tiles = () => {
                 <Popup>{item.name}</Popup>
               </CircleMarker>
             )}
-          </>
+          </Fragment>
         ))}
     </>
   );

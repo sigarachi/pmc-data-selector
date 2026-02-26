@@ -1,8 +1,8 @@
-import { PmcWrapperStyled } from "@features/pmc-data/selector.style";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { PRESSURE_LEVEL, VARIABLES } from "./constants";
 import { useSearchParams } from "react-router-dom";
+import { PmcWrapperStyled } from "@features/controls/components/pmc-selector/selector.style";
 
 export const Variables = (): React.ReactElement => {
   const [selected, setSelected] = useState<string>("z");
@@ -56,7 +56,9 @@ export const Variables = (): React.ReactElement => {
       >
         <option value="">Выберите переменную</option>
         {VARIABLES.map((item) => (
-          <option value={item.value}>{item.title}</option>
+          <option key={item.value} value={item.value}>
+            {item.title}
+          </option>
         ))}
       </select>
 
@@ -67,7 +69,9 @@ export const Variables = (): React.ReactElement => {
         >
           <option value="">Выберите уровень давления</option>
           {PRESSURE_LEVEL.map((item) => (
-            <option value={item}>{item}</option>
+            <option key={item} value={item}>
+              {item}
+            </option>
           ))}
         </select>
       )}

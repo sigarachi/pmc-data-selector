@@ -59,6 +59,15 @@ export const LayerData = () => {
           onClick={() => handleEdit(layer.id)}
         >
           <Text variant="body1">{layer.name}</Text>
+          <Text variant="body2">
+            {new Date(layer.date).toLocaleDateString("ru-RU", {
+              month: "2-digit",
+              day: "2-digit",
+              year: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
           <LayerItemControlWrapper>
             <Button
               onlyIcon

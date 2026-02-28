@@ -11,7 +11,7 @@ export const MyMap = (): React.ReactElement => {
     <div>
       <MapContainer
         center={[75, 60]}
-        zoom={5}
+        zoom={3}
         minZoom={1}
         maxZoom={13}
         style={{ height: "100vh", width: "100%", zIndex: "10" }}

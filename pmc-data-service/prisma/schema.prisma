@@ -18,6 +18,7 @@ model PMC {
 model Param {
   id    String    @id @default(uuid()) @db.Uuid
   name  String
+  title String    @default("")
   value String
   type  ParamType
   pmcId String    @db.Uuid

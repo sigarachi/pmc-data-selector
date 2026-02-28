@@ -1,11 +1,14 @@
 import { NextFunction, Request, Response } from "express";
-import { PmcService } from "@services/pmc";
 import { UploadedFile } from "express-fileupload";
+
+import { PmcService } from "@services/pmc";
+import { ParamsService } from "@services/params";
+
 import { convertCsvToJson } from "../utils/csv-to-json";
 import { CsvParamName, CsvParamNameMap } from "../models/param";
-import { ParamsService } from "@services/params";
 import { PmcFilters } from "../models/pmc";
 import { PaginatedRequest } from "../models/common";
+import { getParamType } from "../utils/get-param-type";
 
 export class PmcController {
   static async getList(
@@ -103,10 +106,15 @@ export class PmcController {
           Object.keys(item).forEach((value: string) => {
             const field = value as CsvParamName;
 
+            if(!item[field]) {
+              return;
+            }
+
             promises.push(
               ParamsService.create(pmc.id, {
-                name: CsvParamNameMap[field],
-                type: field.includes("coords") ? "coords" : "string",
+                name: field,
+                title: CsvParamNameMap[field],
+                type: getParamType(field),
                 value: item[field],
               }),
             );

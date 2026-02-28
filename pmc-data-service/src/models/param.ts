@@ -3,6 +3,7 @@ import { FilteredRequest } from "./common";
 
 export type CreateParamDto = {
   name: string;
+  title: string;
   value: string;
   type: ParamType;
 };

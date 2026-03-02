@@ -1,19 +1,20 @@
-import type { FilteredRequest } from "../common/interfaces";
+import type { FilteredRequest } from '../common/interfaces';
 
-export type ParamType = "coords" | "number" | "date" | "string";
+export type ParamType = 'coords' | 'number' | 'date' | 'string';
 
 export type Param = {
-  id: string;
-  name: string;
-  value: string;
-  type: ParamType;
-  pmcId: string;
+	id: string;
+	name: string;
+	value: string;
+	title: string;
+	type: ParamType;
+	pmcId: string;
 };
 
-export type ParamFilters = FilteredRequest<Param, "name" | "value" | "type">;
+export type ParamFilters = FilteredRequest<Param, 'name' | 'value' | 'type'>;
 
-export type CreateParam = Omit<Param, "id">;
+export type CreateParam = Omit<Param, 'id'>;
 
 export type ListReponse = {
-  params: Array<Param>;
+	params: Array<Param>;
 };

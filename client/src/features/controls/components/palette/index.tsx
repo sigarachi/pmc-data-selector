@@ -1,83 +1,85 @@
-import { useMemo } from "react";
-import { buildBinsByCount } from "./utils";
-import { geopotentialRanges, meteoPalette, windRanges } from "./constants";
-import { Text } from "@university-ecosystem/ui-kit";
-import { PaletteWrapperStyled } from "./palette.style";
+import { useCallback, useState } from 'react';
+import { Input, Text } from '@university-ecosystem/ui-kit';
+import { PaletteWrapperStyled } from './palette.style';
+import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { LegendService } from '@shared/api/services/legend';
+import { useSettings } from '@shared/hooks/use-settings';
 
-interface Props {
-  variable: string;
-  pressure: number;
-}
+export const ColorLegend: React.FC = () => {
+	const { variable, pressure, time, date } = useSettings();
 
-export const ColorLegend: React.FC<Props> = ({ variable, pressure }) => {
-  const { bins, colors, unit } = useMemo(() => {
-    let bins: number[] = [];
-    let unit = "";
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [vmin, setVmin] = useState<string>('');
 
-    if (variable === "z") {
-      bins = buildBinsByCount(
-        geopotentialRanges[pressure][0],
-        geopotentialRanges[pressure][1],
-        meteoPalette.length,
-      );
-      unit = "м";
-    }
+	const [vmax, setVmax] = useState<string>('');
 
-    if (variable === "u") {
-      bins = buildBinsByCount(
-        windRanges[pressure][0],
-        windRanges[pressure][1],
-        meteoPalette.length,
-      );
-      unit = "м/с";
-    }
+	const { data } = useQuery({
+		queryKey: ['legend', variable, pressure, time, date, vmin, vmax],
+		queryFn: () =>
+			LegendService.getLegend({
+				variable,
+				pressure: Number(pressure),
+				time: `${date} ${time}`,
+				vmin,
+				vmax,
+			}),
+		enabled: Boolean(time),
+	});
 
-    if (variable === "u10") {
-      bins = buildBinsByCount(
-        windRanges.surface[0],
-        windRanges.surface[1],
-        meteoPalette.length,
-      );
-      unit = "м/с";
-    }
+	console.log('21312', searchParams.get('variable'));
 
-    const colors = meteoPalette;
+	const handleChange = useCallback(
+		(key: 'vmin' | 'vmax', value: string) => {
+			if (key === 'vmin') {
+				setVmin(value);
+			} else {
+				setVmax(value);
+			}
+			searchParams.set(key, value);
+			setSearchParams(searchParams);
+		},
+		[searchParams, setSearchParams]
+	);
 
-    return { bins, colors, unit };
-  }, [variable, pressure]);
+	return (
+		<PaletteWrapperStyled>
+			{/* цветные блоки */}
+			{data && data.colors && (
+				<div style={{ display: 'flex', width: '90%' }}>
+					{data.colors.map((c, i) => (
+						<div key={i} style={{ flex: 1, height: 16, background: c }} />
+					))}
+				</div>
+			)}
 
-  return (
-    <PaletteWrapperStyled>
-      {/* цветные блоки */}
-      <div style={{ display: "flex", width: "90%" }}>
-        {colors.map((c, i) => (
-          <div
-            key={i}
-            style={{
-              flex: 1,
-              height: 16,
-              background: c,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* подписи границ */}
-      <div
-        style={{
-          display: "flex",
-          width: "90%",
-          justifyContent: "space-between",
-          fontSize: 11,
-        }}
-      >
-        {bins.map((b, i) => (
-          <Text key={i} variant="body2" textAlign="center">
-            {Math.round(b)}
-          </Text>
-        ))}
-      </div>
-      <Text variant="body2">{unit}</Text>
-    </PaletteWrapperStyled>
-  );
+			{/* подписи границ */}
+			{data && data.bins && (
+				<div
+					style={{
+						display: 'flex',
+						width: '90%',
+						justifyContent: 'space-between',
+						fontSize: 11,
+					}}>
+					{data.bins.map((b, i) => (
+						<Text variant="body1" key={i}>
+							{i !== 0 && i !== data.bins.length - 1 && <>{Math.round(b)}</>}
+						</Text>
+					))}
+				</div>
+			)}
+			{data && <Text variant="body2">{data.unit}</Text>}
+			<Input
+				value={vmin}
+				placeholder="min"
+				onChange={(value) => handleChange('vmin', value.toString())}
+			/>
+			<Input
+				value={vmax}
+				placeholder="max"
+				onChange={(value) => handleChange('vmax', value.toString())}
+			/>
+		</PaletteWrapperStyled>
+	);
 };

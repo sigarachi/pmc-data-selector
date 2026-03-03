@@ -78,7 +78,7 @@ export const ColorLegend: React.FC = () => {
 					<BinsWrapperStyled>
 						{data.bins.map((b, i) => (
 							<Text variant="body1" key={i}>
-								{i !== 0 && i !== data.bins.length - 1 && <>{Math.round(b)}</>}
+								{<>{Math.round(b)}</>}
 							</Text>
 						))}
 					</BinsWrapperStyled>

@@ -558,10 +558,35 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
         raise
 
 
+def compute_variable_stats(ds, variable, time_index, pressure_level):
+    var = ds[variable]
+
+    level_index = 0
+
+    if 'pressure_level' in var.dims:
+        levels = var.pressure_level.values
+        level_index = int(
+            np.argmin(np.abs(levels.astype(float) - float(pressure_level))))
+
+    if 'valid_time' in var.dims and 'pressure_level' in var.dims:
+        data = var.isel(valid_time=time_index,
+                        pressure_level=level_index).values
+    elif 'valid_time' in var.dims:
+        data = var.isel(valid_time=time_index).values
+    else:
+        data = var.values
+
+    vmin = float(np.nanpercentile(data, 2))
+    vmax = float(np.nanpercentile(data, 98))
+
+    return vmin, vmax
+
 # variable: str, t: int = 0
 
+
 @app.get("/tile/{z}/{x}/{y}")
-async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850):
+async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, u_vmin: Optional[float] = None,
+               u_vmax: Optional[float] = None):
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
     ds_file = await find_matching_dataset_by_time(
         time, dataset_type="era5", time_tolerance_hours=1)
@@ -705,6 +730,16 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
         img = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
     else:
 
+        if u_vmin is not None:
+            vmin = float(u_vmin)
+
+        if u_vmax is not None:
+            vmax = float(u_vmax)
+
+        # защита от деления на 0
+        if vmax <= vmin:
+            vmax = vmin + 1e-6
+
         norm = (tile_data - vmin) / (vmax - vmin)
         norm = np.clip(norm, 0, 0.999)
 
@@ -727,3 +762,82 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return Response(buf.getvalue(), media_type="image/png")
+
+
+@app.get("/legend")
+async def legend(
+    variable: str,
+    time: str,
+    pressure_level: int = 850,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None
+):
+    time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
+
+    ds_file = await find_matching_dataset_by_time(
+        time, dataset_type="era5", time_tolerance_hours=1
+    )
+
+    if ds_file is None:
+        return {}
+
+    filename, dataset, _ = ds_file
+
+    async with nc_lock:
+        ds = get_cached_dataset(filename)
+
+    # ---- найти time_index ----
+    times = ds[variable].valid_time.values
+    time_index = 0
+    for i, t in enumerate(times):
+        if abs((pd.to_datetime(t) - time).total_seconds()) <= 3600:
+            time_index = i
+            break
+
+    # ---- авто статистика (percentiles) ----
+    auto_vmin, auto_vmax = compute_variable_stats(
+        ds, variable, time_index, pressure_level
+    )
+
+    # ---- пользовательские пределы имеют приоритет ----
+    vmin = float(vmin) if vmin is not None else auto_vmin
+    vmax = float(vmax) if vmax is not None else auto_vmax
+
+    # защита
+    if vmax <= vmin:
+        vmax = vmin + 1e-6
+
+    # ---- цвета ----
+    cmap = get_panoply_colormap("NEO_modis_sst_45")
+    colors = [mcolors.to_hex(c) for c in cmap.colors]
+
+    n = len(colors)
+
+    # ---------------------------
+    # UNDER/OVER схема
+    # C0 = < vmin
+    # C1..C(n-2) = диапазон
+    # C(n-1) = > vmax
+    # bins = n-1  (меньше на 2 как ты хотел)
+    # ---------------------------
+
+    inner_intervals = n - 2
+    bins = np.linspace(vmin, vmax, inner_intervals + 1).tolist()
+
+    unit_map = {
+        "z": "м",
+        "u": "м/с",
+        "v": "м/с",
+        "u10": "м/с",
+        "v10": "м/с"
+    }
+
+    return {
+        "vmin": vmin,
+        "vmax": vmax,
+        "bins": bins,
+        "colors": colors,
+        "underflow_color": colors[0],
+        "overflow_color": colors[-1],
+        "unit": unit_map.get(variable, "")
+    }

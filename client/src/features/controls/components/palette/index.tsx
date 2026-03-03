@@ -1,83 +1,128 @@
-import { useMemo } from "react";
-import { buildBinsByCount } from "./utils";
-import { geopotentialRanges, meteoPalette, windRanges } from "./constants";
-import { Text } from "@university-ecosystem/ui-kit";
-import { PaletteWrapperStyled } from "./palette.style";
+import { useCallback, useState } from 'react';
+import {
+	Button,
+	Input,
+	ModalWindow,
+	Text,
+	useToggle,
+} from '@university-ecosystem/ui-kit';
+import {
+	BinsWrapperStyled,
+	ColorsWrapperStyled,
+	InfoWrapperStyled,
+	PaletteWrapperStyled,
+} from './palette.style';
+import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { LegendService } from '@shared/api/services/legend';
+import { useSettings } from '@shared/hooks/use-settings';
+import { IoMdSettings } from 'react-icons/io';
 
-interface Props {
-  variable: string;
-  pressure: number;
-}
+export const ColorLegend: React.FC = () => {
+	const { variable, pressure, time, date } = useSettings();
 
-export const ColorLegend: React.FC<Props> = ({ variable, pressure }) => {
-  const { bins, colors, unit } = useMemo(() => {
-    let bins: number[] = [];
-    let unit = "";
+	const { flag, toggleOn, toggleOff } = useToggle();
 
-    if (variable === "z") {
-      bins = buildBinsByCount(
-        geopotentialRanges[pressure][0],
-        geopotentialRanges[pressure][1],
-        meteoPalette.length,
-      );
-      unit = "м";
-    }
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [vmin, setVmin] = useState<string>('');
 
-    if (variable === "u") {
-      bins = buildBinsByCount(
-        windRanges[pressure][0],
-        windRanges[pressure][1],
-        meteoPalette.length,
-      );
-      unit = "м/с";
-    }
+	const [vmax, setVmax] = useState<string>('');
 
-    if (variable === "u10") {
-      bins = buildBinsByCount(
-        windRanges.surface[0],
-        windRanges.surface[1],
-        meteoPalette.length,
-      );
-      unit = "м/с";
-    }
+	const { data, refetch } = useQuery({
+		queryKey: ['legend', variable, pressure, time, date],
+		queryFn: () =>
+			LegendService.getLegend({
+				variable,
+				pressure: Number(pressure),
+				time: `${date} ${time}`,
+				vmin,
+				vmax,
+			}),
+		enabled: Boolean(time),
+	});
 
-    const colors = meteoPalette;
+	const handleChange = useCallback(
+		(key: 'vmin' | 'vmax') => {
+			return (value: string | number) => {
+				if (key === 'vmin') {
+					setVmin(value.toString());
+				} else {
+					setVmax(value.toString());
+				}
+			};
+		},
+		[searchParams, setSearchParams]
+	);
 
-    return { bins, colors, unit };
-  }, [variable, pressure]);
+	const handleApply = useCallback(async () => {
+		searchParams.set('vmin', vmin);
+		searchParams.set('vmax', vmax);
 
-  return (
-    <PaletteWrapperStyled>
-      {/* цветные блоки */}
-      <div style={{ display: "flex", width: "90%" }}>
-        {colors.map((c, i) => (
-          <div
-            key={i}
-            style={{
-              flex: 1,
-              height: 16,
-              background: c,
-            }}
-          />
-        ))}
-      </div>
+		setSearchParams(searchParams);
+		await refetch();
+		toggleOff();
+	}, [vmin, vmax, searchParams, setSearchParams, refetch, toggleOff]);
 
-      {/* подписи границ */}
-      <div
-        style={{
-          display: "flex",
-          width: "90%",
-          justifyContent: "space-between",
-          fontSize: 11,
-        }}
-      >
-        {bins.map((b, i) => (
-          <Text key={i} variant="body2" textAlign="center">
-            {Math.round(b)}
-          </Text>
-        ))}
-      </div>
-      <Text variant="body2">{unit}</Text>
-    </PaletteWrapperStyled>
-  );
+	return (
+		<PaletteWrapperStyled>
+			<InfoWrapperStyled>
+				{data && data.colors && (
+					<ColorsWrapperStyled>
+						{data.colors.map((c, i) => (
+							<div key={i} style={{ flex: 1, height: 16, background: c }} />
+						))}
+					</ColorsWrapperStyled>
+				)}
+
+				{data && data.bins && (
+					<BinsWrapperStyled>
+						{data.bins.map((b, i) => (
+							<Text variant="body1" key={i}>
+								{i !== 0 && i !== data.bins.length - 1 && <>{Math.round(b)}</>}
+							</Text>
+						))}
+					</BinsWrapperStyled>
+				)}
+				{data && <Text variant="body2">{data.unit}</Text>}
+			</InfoWrapperStyled>
+
+			<Button
+				icon={<IoMdSettings />}
+				size="inherit"
+				onlyIcon
+				onClick={toggleOn}>
+				Применить
+			</Button>
+			<ModalWindow isOpen={flag} onClose={() => {}}>
+				<ModalWindow.Header title="Настройки шкалы" onClose={toggleOff} />
+				<ModalWindow.Content>
+					<Input
+						value={vmin}
+						variant="fullwidth"
+						placeholder="min"
+						//@ts-ignore
+						onChange={handleChange('vmin')}
+					/>
+					<Input
+						value={vmax}
+						variant="fullwidth"
+						placeholder="max"
+						//@ts-ignore
+						onChange={handleChange('vmax')}
+					/>
+				</ModalWindow.Content>
+				<ModalWindow.Footer
+					actions={[
+						{ children: 'Применить', size: 'fullWidth', onClick: handleApply },
+						{
+							children: 'Отмена',
+							size: 'fullWidth',
+							onClick: toggleOff,
+							variant: 'secondary',
+						},
+					]}
+				/>
+			</ModalWindow>
+		</PaletteWrapperStyled>
+	);
 };

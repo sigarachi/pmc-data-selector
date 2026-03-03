@@ -1,10 +1,9 @@
 import styled from '@emotion/styled';
 
 export const CoordsWrapperStyled = styled.div`
-	position: absolute;
-	top: 10%;
-
 	display: flex;
+	position: absolute;
+	right: 0;
 
 	background-color: white;
 

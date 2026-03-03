@@ -1,27 +1,9 @@
-import { useState } from 'react';
-import { useMapEvents } from 'react-leaflet';
-import type { CoordsRef } from './interfaces';
 import { CoordsWrapperStyled } from './coords.style';
 import { Text } from '@university-ecosystem/ui-kit';
+import { useCoords } from '@shared/store/coords';
 
 export const Coords = () => {
-	const [coords, setCoords] = useState<CoordsRef | null>(null);
-
-	useMapEvents({
-		//@ts-ignore
-
-		//@ts-ignore
-		mousemove: (e) => {
-			setCoords({
-				lat: e.latlng.lat,
-				lng: e.latlng.lng,
-			});
-		},
-	});
-
-	if (!coords) {
-		return <></>;
-	}
+	const { coords } = useCoords();
 
 	return (
 		<CoordsWrapperStyled>

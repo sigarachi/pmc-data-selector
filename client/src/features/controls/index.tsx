@@ -4,6 +4,7 @@ import { Buttons } from './components/buttons';
 import { BottomWrapperStyled } from './controls.style';
 import { Timeline } from './components/timeline';
 import { useInitControls } from './hooks/use-init-controls';
+import { Coords } from '@features/map/components/coords';
 
 export const Controls = () => {
 	const [searchParams] = useSearchParams();
@@ -24,6 +25,7 @@ export const Controls = () => {
 			<Outlet />
 			<BottomWrapperStyled>
 				{!hideLegend && <ColorLegend />}
+				<Coords />
 				{!hideTimeLine && <Timeline />}
 			</BottomWrapperStyled>
 		</>

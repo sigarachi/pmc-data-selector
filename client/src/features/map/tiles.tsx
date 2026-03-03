@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useToggle } from '@university-ecosystem/ui-kit';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { CircleMarker, Popup, TileLayer } from 'react-leaflet';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { Drawer } from '@features/map/components/drawer';
 import type { ParamFilters } from '@shared/api/models/param';
@@ -10,6 +10,7 @@ import { ParamService } from '@shared/api/services/param';
 import { Loader } from '@shared/components/loader';
 import { options } from '@shared/config';
 import { useSettings } from '@shared/hooks/use-settings';
+import { useCoordsObserver } from './hooks/use-coords-observer';
 
 export const Tiles = () => {
 	const { id = '', layerId = '' } = useParams();
@@ -55,6 +56,8 @@ export const Tiles = () => {
 	});
 
 	const { flag: isLoading, toggleOn, toggleOff } = useToggle();
+
+	useCoordsObserver();
 
 	return (
 		<>

@@ -1,21 +1,35 @@
 import { useCallback, useState } from 'react';
-import { Input, Text } from '@university-ecosystem/ui-kit';
-import { PaletteWrapperStyled } from './palette.style';
+import {
+	Button,
+	Input,
+	ModalWindow,
+	Text,
+	useToggle,
+} from '@university-ecosystem/ui-kit';
+import {
+	BinsWrapperStyled,
+	ColorsWrapperStyled,
+	InfoWrapperStyled,
+	PaletteWrapperStyled,
+} from './palette.style';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { LegendService } from '@shared/api/services/legend';
 import { useSettings } from '@shared/hooks/use-settings';
+import { IoMdSettings } from 'react-icons/io';
 
 export const ColorLegend: React.FC = () => {
 	const { variable, pressure, time, date } = useSettings();
+
+	const { flag, toggleOn, toggleOff } = useToggle();
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [vmin, setVmin] = useState<string>('');
 
 	const [vmax, setVmax] = useState<string>('');
 
-	const { data } = useQuery({
-		queryKey: ['legend', variable, pressure, time, date, vmin, vmax],
+	const { data, refetch } = useQuery({
+		queryKey: ['legend', variable, pressure, time, date],
 		queryFn: () =>
 			LegendService.getLegend({
 				variable,
@@ -27,59 +41,88 @@ export const ColorLegend: React.FC = () => {
 		enabled: Boolean(time),
 	});
 
-	console.log('21312', searchParams.get('variable'));
-
 	const handleChange = useCallback(
-		(key: 'vmin' | 'vmax', value: string) => {
-			if (key === 'vmin') {
-				setVmin(value);
-			} else {
-				setVmax(value);
-			}
-			searchParams.set(key, value);
-			setSearchParams(searchParams);
+		(key: 'vmin' | 'vmax') => {
+			return (value: string | number) => {
+				if (key === 'vmin') {
+					setVmin(value.toString());
+				} else {
+					setVmax(value.toString());
+				}
+			};
 		},
 		[searchParams, setSearchParams]
 	);
 
+	const handleApply = useCallback(async () => {
+		searchParams.set('vmin', vmin);
+		searchParams.set('vmax', vmax);
+
+		setSearchParams(searchParams);
+		await refetch();
+		toggleOff();
+	}, [vmin, vmax, searchParams, setSearchParams, refetch, toggleOff]);
+
 	return (
 		<PaletteWrapperStyled>
-			{/* цветные блоки */}
-			{data && data.colors && (
-				<div style={{ display: 'flex', width: '90%' }}>
-					{data.colors.map((c, i) => (
-						<div key={i} style={{ flex: 1, height: 16, background: c }} />
-					))}
-				</div>
-			)}
+			<InfoWrapperStyled>
+				{data && data.colors && (
+					<ColorsWrapperStyled>
+						{data.colors.map((c, i) => (
+							<div key={i} style={{ flex: 1, height: 16, background: c }} />
+						))}
+					</ColorsWrapperStyled>
+				)}
 
-			{/* подписи границ */}
-			{data && data.bins && (
-				<div
-					style={{
-						display: 'flex',
-						width: '90%',
-						justifyContent: 'space-between',
-						fontSize: 11,
-					}}>
-					{data.bins.map((b, i) => (
-						<Text variant="body1" key={i}>
-							{i !== 0 && i !== data.bins.length - 1 && <>{Math.round(b)}</>}
-						</Text>
-					))}
-				</div>
-			)}
-			{data && <Text variant="body2">{data.unit}</Text>}
-			<Input
-				value={vmin}
-				placeholder="min"
-				onChange={(value) => handleChange('vmin', value.toString())}
-			/>
-			<Input
-				value={vmax}
-				placeholder="max"
-				onChange={(value) => handleChange('vmax', value.toString())}
-			/>
+				{data && data.bins && (
+					<BinsWrapperStyled>
+						{data.bins.map((b, i) => (
+							<Text variant="body1" key={i}>
+								{i !== 0 && i !== data.bins.length - 1 && <>{Math.round(b)}</>}
+							</Text>
+						))}
+					</BinsWrapperStyled>
+				)}
+				{data && <Text variant="body2">{data.unit}</Text>}
+			</InfoWrapperStyled>
+
+			<Button
+				icon={<IoMdSettings />}
+				size="inherit"
+				onlyIcon
+				onClick={toggleOn}>
+				Применить
+			</Button>
+			<ModalWindow isOpen={flag} onClose={() => {}}>
+				<ModalWindow.Header title="Настройки шкалы" onClose={toggleOff} />
+				<ModalWindow.Content>
+					<Input
+						value={vmin}
+						variant="fullwidth"
+						placeholder="min"
+						//@ts-ignore
+						onChange={handleChange('vmin')}
+					/>
+					<Input
+						value={vmax}
+						variant="fullwidth"
+						placeholder="max"
+						//@ts-ignore
+						onChange={handleChange('vmax')}
+					/>
+				</ModalWindow.Content>
+				<ModalWindow.Footer
+					actions={[
+						{ children: 'Применить', size: 'fullWidth', onClick: handleApply },
+						{
+							children: 'Отмена',
+							size: 'fullWidth',
+							onClick: toggleOff,
+							variant: 'secondary',
+						},
+					]}
+				/>
+			</ModalWindow>
 		</PaletteWrapperStyled>
 	);
 };

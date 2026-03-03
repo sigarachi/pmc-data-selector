@@ -13,7 +13,7 @@ export const MyMap = (): React.ReactElement => {
 				zoom={3}
 				minZoom={1}
 				maxZoom={13}
-				style={{ height: '100vh', width: '100%', zIndex: '10' }}
+				style={{ height: '100vh', width: '100%', zIndex: '1' }}
 				key={new Date().getTime()}>
 				<Tiles />
 			</MapContainer>

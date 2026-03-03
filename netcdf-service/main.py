@@ -821,8 +821,8 @@ async def legend(
     # bins = n-1  (меньше на 2 как ты хотел)
     # ---------------------------
 
-    inner_intervals = n - 2
-    bins = np.linspace(vmin, vmax, inner_intervals + 1).tolist()
+    inner_intervals = n
+    bins = np.linspace(vmin, vmax, inner_intervals).tolist()
 
     unit_map = {
         "z": "м",

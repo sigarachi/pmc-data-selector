@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useToggle } from '@university-ecosystem/ui-kit';
 import { Fragment, useMemo, useState } from 'react';
-import { CircleMarker, Popup, TileLayer } from 'react-leaflet';
+import { Circle, CircleMarker, Popup, TileLayer } from 'react-leaflet';
 import { useParams } from 'react-router-dom';
 
 import { Drawer } from '@features/map/components/drawer';
@@ -19,6 +19,10 @@ export const Tiles = () => {
 
 	const [filters] = useState<ParamFilters['filters']>([
 		{ field: 'type', condition: 'equals', value: 'coords' },
+	]);
+
+	const [radiusFilters] = useState<ParamFilters['filters']>([
+		{ field: 'type', condition: 'equals', value: 'string' },
 	]);
 
 	const params = useMemo(() => {
@@ -55,6 +59,12 @@ export const Tiles = () => {
 		enabled: Boolean(id.length),
 	});
 
+	const { data: radiuses } = useQuery({
+		queryKey: ['pmc-params', id, radiusFilters],
+		queryFn: () => ParamService.getList(id, { filters: radiusFilters }),
+		enabled: Boolean(id.length),
+	});
+
 	const { flag: isLoading, toggleOn, toggleOff } = useToggle();
 
 	useCoordsObserver();
@@ -77,6 +87,7 @@ export const Tiles = () => {
 				/>
 			)}
 			{data?.params &&
+				radiuses &&
 				data.params.map((item) => (
 					<Fragment key={item.id}>
 						{item.value && (
@@ -88,6 +99,13 @@ export const Tiles = () => {
 								}}>
 								<Popup>{item.title}</Popup>
 							</CircleMarker>
+						)}
+
+						{radiuses.params.length && (
+							<Circle
+								center={item.value.trim().split(',').reverse()}
+								radius={Number(radiuses.params[0].value) * 1000}
+							/>
 						)}
 					</Fragment>
 				))}

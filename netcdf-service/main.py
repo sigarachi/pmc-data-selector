@@ -38,7 +38,7 @@ nc_lock = asyncio.Lock()
 
 def get_font(size=24):
     try:
-        return ImageFont.truetype("app/assets/fonts/Inter.ttf", size)
+        return ImageFont.truetype(FONT_PATH, size)
     except Exception:
         return ImageFont.truetype("arial.ttf", size)
 

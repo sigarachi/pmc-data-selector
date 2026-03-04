@@ -11,6 +11,7 @@ export const getList = async (
       pmcId,
       ...filters,
     },
+    orderBy: [{ name: "desc" }, { title: "asc" }],
   });
 
 export const create = async (pmcId: string, values: CreateParamDto) =>

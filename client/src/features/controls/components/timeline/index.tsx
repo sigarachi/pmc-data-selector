@@ -26,15 +26,39 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 		enabled: Boolean(id.length),
 	});
 
+	function getPreviousDay(date = new Date()) {
+		const previous = new Date(date.getTime());
+		previous.setDate(date.getDate() - 1);
+
+		return previous;
+	}
+
 	const dateOptions = useMemo(() => {
+		let formation = '';
 		const dates =
 			data?.params
 				.filter((item) => item.type === 'date')
-				.map((item) => item.value.split(' ')[0]) ?? [];
+				.map((item) => {
+					if (item.name === 'datetime_formation') {
+						formation = item.value.split(' ')[0];
+					}
+
+					return item.value.split(' ')[0];
+				}) ?? [];
 
 		const dateSet = new Set(dates);
 
-		return Array.from(dateSet);
+		dateSet.add(
+			getPreviousDay(new Date(formation)).toLocaleDateString('us-US', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric',
+			})
+		);
+
+		return Array.from(dateSet).sort((a, b) => {
+			return Number(new Date(a)) - Number(new Date(b));
+		});
 	}, [data]);
 
 	const handleSelect = useCallback(

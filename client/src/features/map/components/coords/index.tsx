@@ -8,8 +8,8 @@ export const Coords = () => {
 	return (
 		<CoordsWrapperStyled>
 			<>
-				<Text variant="body2">{coords.lat}</Text>
-				<Text variant="body2">{coords.lng}</Text>
+				<Text variant="body2">{coords.lat.toFixed(3)}</Text>
+				<Text variant="body2">{coords.lng.toFixed(3)}</Text>
 			</>
 		</CoordsWrapperStyled>
 	);

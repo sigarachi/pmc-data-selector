@@ -14,6 +14,8 @@ export const Variables = (): React.ReactElement => {
 		(value: string) => {
 			setSelected(value);
 			searchParams.set('variable', value);
+			searchParams.set('vmin', '');
+			searchParams.set('vmax', '');
 			setSearchParams(searchParams);
 		},
 		[searchParams, setSearchParams]

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
 	Button,
 	Input,
@@ -17,9 +17,17 @@ import { useQuery } from '@tanstack/react-query';
 import { LegendService } from '@shared/api/services/legend';
 import { useSettings } from '@shared/hooks/use-settings';
 import { IoMdSettings } from 'react-icons/io';
+import { VARIABLES } from '../variables/constants';
 
 export const ColorLegend: React.FC = () => {
-	const { variable, pressure, time, date } = useSettings();
+	const {
+		variable,
+		pressure,
+		time,
+		date,
+		vmin: searchVmin,
+		vmax: searchVmax,
+	} = useSettings();
 
 	const { flag, toggleOn, toggleOff } = useToggle();
 
@@ -29,14 +37,22 @@ export const ColorLegend: React.FC = () => {
 	const [vmax, setVmax] = useState<string>('');
 
 	const { data, refetch } = useQuery({
-		queryKey: ['legend', variable, pressure, time, date],
+		queryKey: [
+			'legend',
+			variable,
+			pressure,
+			time,
+			date,
+			searchVmin,
+			searchVmax,
+		],
 		queryFn: () =>
 			LegendService.getLegend({
 				variable,
 				pressure: Number(pressure),
 				time: `${date} ${time}`,
-				vmin,
-				vmax,
+				vmin: searchVmin,
+				vmax: searchVmax,
 			}),
 		enabled: Boolean(time),
 	});
@@ -63,9 +79,17 @@ export const ColorLegend: React.FC = () => {
 		toggleOff();
 	}, [vmin, vmax, searchParams, setSearchParams, refetch, toggleOff]);
 
+	useEffect(() => {
+		setVmin(searchVmin);
+		setVmax(searchVmax);
+	}, [searchVmax, searchVmin]);
+
 	return (
 		<PaletteWrapperStyled>
 			<InfoWrapperStyled>
+				<Text variant="body1" bold>
+					{VARIABLES.find((i) => i.value === variable)?.title ?? ''}
+				</Text>
 				{data && data.colors && (
 					<ColorsWrapperStyled>
 						{data.colors.map((c, i) => (

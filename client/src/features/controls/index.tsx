@@ -5,9 +5,12 @@ import { BottomWrapperStyled } from './controls.style';
 import { Timeline } from './components/timeline';
 import { useInitControls } from './hooks/use-init-controls';
 import { Coords } from '@features/map/components/coords';
+import { useEffect } from 'react';
+import { useScale } from '@shared/store/scale';
 
 export const Controls = () => {
 	const [searchParams] = useSearchParams();
+	const { reset } = useScale();
 
 	const hideTimeLine =
 		!searchParams.get('showTimeline') ||
@@ -18,6 +21,12 @@ export const Controls = () => {
 		searchParams.get('showLegend') === 'false';
 
 	useInitControls();
+
+	useEffect(() => {
+		return () => {
+			reset();
+		};
+	}, [reset]);
 
 	return (
 		<>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	Button,
 	Input,
@@ -18,41 +18,39 @@ import { LegendService } from '@shared/api/services/legend';
 import { useSettings } from '@shared/hooks/use-settings';
 import { IoMdSettings } from 'react-icons/io';
 import { VARIABLES } from '../variables/constants';
+import {
+	useScale,
+	type Variables,
+	type VariableValue,
+} from '@shared/store/scale';
 
 export const ColorLegend: React.FC = () => {
-	const {
-		variable,
-		pressure,
-		time,
-		date,
-		vmin: searchVmin,
-		vmax: searchVmax,
-	} = useSettings();
+	const { variable, pressure, time, date } = useSettings();
+	const scale = useScale();
+
+	const { setValues } = scale;
+
+	const current = useMemo<VariableValue>(
+		() => scale[variable as Variables],
+		[scale, variable]
+	);
+
+	const [vmin, setVmin] = useState<string>(current.vmin);
+	const [vmax, setVmax] = useState<string>(current.vmax);
 
 	const { flag, toggleOn, toggleOff } = useToggle();
 
 	const [searchParams, setSearchParams] = useSearchParams();
-	const [vmin, setVmin] = useState<string>('');
-
-	const [vmax, setVmax] = useState<string>('');
 
 	const { data, refetch } = useQuery({
-		queryKey: [
-			'legend',
-			variable,
-			pressure,
-			time,
-			date,
-			searchVmin,
-			searchVmax,
-		],
+		queryKey: ['legend', variable, pressure, time, date, current],
 		queryFn: () =>
 			LegendService.getLegend({
 				variable,
 				pressure: Number(pressure),
 				time: `${date} ${time}`,
-				vmin: searchVmin,
-				vmax: searchVmax,
+				vmin: current.vmin,
+				vmax: current.vmax,
 			}),
 		enabled: Boolean(time),
 	});
@@ -73,16 +71,27 @@ export const ColorLegend: React.FC = () => {
 	const handleApply = useCallback(async () => {
 		searchParams.set('vmin', vmin);
 		searchParams.set('vmax', vmax);
+		setValues(variable as Variables, { vmin, vmax });
 
 		setSearchParams(searchParams);
 		await refetch();
 		toggleOff();
-	}, [vmin, vmax, searchParams, setSearchParams, refetch, toggleOff]);
+	}, [
+		scale,
+		variable,
+		setValues,
+		vmin,
+		vmax,
+		searchParams,
+		setSearchParams,
+		refetch,
+		toggleOff,
+	]);
 
 	useEffect(() => {
-		setVmin(searchVmin);
-		setVmax(searchVmax);
-	}, [searchVmax, searchVmin]);
+		setVmax(current.vmax);
+		setVmin(current.vmin);
+	}, [current]);
 
 	return (
 		<PaletteWrapperStyled>

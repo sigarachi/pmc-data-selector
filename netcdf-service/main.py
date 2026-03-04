@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 import xarray as xr
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import matplotlib.colors as mcolors
 import io
 from typing import Dict, Optional, Tuple, List
@@ -29,10 +29,18 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+FONT_PATH = Path(__file__).parent / "assets/fonts/Inter.ttf"
 
 pool = None
 
 nc_lock = asyncio.Lock()
+
+
+def get_font(size=24):
+    try:
+        return ImageFont.truetype("app/assets/fonts/Inter.ttf", size)
+    except Exception:
+        return ImageFont.truetype("arial.ttf", size)
 
 
 @asynccontextmanager
@@ -584,6 +592,23 @@ def compute_variable_stats(ds, variable, time_index, pressure_level):
 # variable: str, t: int = 0
 
 
+def make_no_data_tile(text: str = "Нет данных") -> bytes:
+    img = Image.new("RGBA", (256, 256), (240, 240, 240, 255))
+    draw = ImageDraw.Draw(img)
+
+    font = get_font()
+
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+    draw.text(((256 - w) / 2, (256 - h) / 2),
+              text, fill=(80, 80, 80), font=font)
+
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
+
+
 @app.get("/tile/{z}/{x}/{y}")
 async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, u_vmin: Optional[float] = None,
                u_vmax: Optional[float] = None):
@@ -592,7 +617,10 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
         time, dataset_type="era5", time_tolerance_hours=1)
 
     if ds_file is None or variable is None:
-        return Response()
+        return Response(
+            content=make_no_data_tile(),
+            media_type="image/png"
+        )
 
     filename, dataset, time_diff = ds_file
 

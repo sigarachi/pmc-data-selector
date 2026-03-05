@@ -609,6 +609,44 @@ def make_no_data_tile(text: str = "Нет данных") -> bytes:
     return buf.getvalue()
 
 
+def draw_wind_arrows(img, u, v, step=32, scale=2.5):
+    draw = ImageDraw.Draw(img)
+
+    h, w = u.shape
+
+    for j in range(0, h, step):
+        for i in range(0, w, step):
+            uu = u[j, i]
+            vv = v[j, i]
+
+            if np.isnan(uu) or np.isnan(vv):
+                continue
+
+            x0 = i
+            y0 = j
+
+            x1 = x0 + uu * scale
+            y1 = y0 - vv * scale
+
+            draw.line((x0, y0, x1, y1), fill=(0, 0, 0, 255), width=2)
+
+            angle = np.arctan2(-(y1 - y0), x1 - x0)
+
+            arrow_len = 5
+            left = (
+                x1 - arrow_len*np.cos(angle - np.pi/6),
+                y1 + arrow_len*np.sin(angle - np.pi/6)
+            )
+            right = (
+                x1 - arrow_len*np.cos(angle + np.pi/6),
+                y1 + arrow_len*np.sin(angle + np.pi/6)
+            )
+
+            draw.polygon([(x1, y1), left, right], fill=(0, 0, 0, 255))
+
+    return img
+
+
 @app.get("/tile/{z}/{x}/{y}")
 async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, u_vmin: Optional[float] = None,
                u_vmax: Optional[float] = None):
@@ -786,6 +824,9 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
 
         rgba[..., 3] = (~mask) * 255
         img = Image.fromarray(rgba, "RGBA")
+
+    if variable in ["u", "u10"]:
+        img = draw_wind_arrows(img, u_data, v_data)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")

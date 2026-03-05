@@ -13,5 +13,9 @@ export const useInitControls = () => {
 			searchParams.set('showTimeline', 'true');
 			setSearchParams(searchParams);
 		}
+		if (!searchParams.get('showPoints')) {
+			searchParams.set('showPoints', 'true');
+			setSearchParams(searchParams);
+		}
 	}, [searchParams]);
 };

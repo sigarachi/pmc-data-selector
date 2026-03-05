@@ -40,7 +40,22 @@ export const PmcData = () => {
 
 			{options.map((item) => (
 				<Text variant="body1" key={item.value}>
-					{item.title} : {item.value}
+					{item.type === 'date' ? (
+						<>
+							{item.title} :{' '}
+							{new Date(item.value).toLocaleDateString('ru-RU', {
+								year: 'numeric',
+								day: '2-digit',
+								month: '2-digit',
+								hour: '2-digit',
+								minute: '2-digit',
+							})}
+						</>
+					) : (
+						<>
+							{item.title} : {item.value}
+						</>
+					)}
 				</Text>
 			))}
 

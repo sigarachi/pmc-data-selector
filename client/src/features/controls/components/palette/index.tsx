@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LegendService } from '@shared/api/services/legend';
 import { useSettings } from '@shared/hooks/use-settings';
 import { IoMdSettings } from 'react-icons/io';
+import { RiArrowGoBackFill } from 'react-icons/ri';
 import { VARIABLES } from '../variables/constants';
 import {
 	useScale,
@@ -37,6 +38,10 @@ export const ColorLegend: React.FC = () => {
 
 	const [vmin, setVmin] = useState<string>(current.vmin);
 	const [vmax, setVmax] = useState<string>(current.vmax);
+
+	const showBackButton = useMemo(() => {
+		return Boolean(current.vmin) || Boolean(current.vmax);
+	}, [current]);
 
 	const { flag, toggleOn, toggleOff } = useToggle();
 
@@ -67,6 +72,17 @@ export const ColorLegend: React.FC = () => {
 		},
 		[searchParams, setSearchParams]
 	);
+
+	const handleRollback = useCallback(async () => {
+		setVmin(() => '');
+		setVmax(() => '');
+		searchParams.set('vmin', '');
+		searchParams.set('vmax', '');
+		setValues(variable as Variables, { vmin: '', vmax: '' });
+
+		setSearchParams(searchParams);
+		await refetch();
+	}, [refetch, searchParams, setSearchParams, setValues]);
 
 	const handleApply = useCallback(async () => {
 		searchParams.set('vmin', vmin);
@@ -126,6 +142,14 @@ export const ColorLegend: React.FC = () => {
 				onClick={toggleOn}>
 				Применить
 			</Button>
+			{showBackButton && (
+				<Button
+					icon={<RiArrowGoBackFill />}
+					size="inherit"
+					onClick={handleRollback}>
+					Отменить
+				</Button>
+			)}
 			<ModalWindow isOpen={flag} onClose={() => {}}>
 				<ModalWindow.Header title="Настройки шкалы" onClose={toggleOff} />
 				<ModalWindow.Content>

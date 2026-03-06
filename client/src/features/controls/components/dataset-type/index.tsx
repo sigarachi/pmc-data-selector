@@ -4,9 +4,12 @@ import { DATASET_OPTIONS } from './constants';
 import { Badge } from '@university-ecosystem/ui-kit';
 import { useCallback } from 'react';
 import type { DatasetType as Type } from '@shared/api/models/dataset';
+import { useSettings } from '@shared/hooks/use-settings';
 
 export const DatasetType = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	const { type } = useSettings();
 
 	const handleSelect = useCallback(
 		(value: Type) => {
@@ -23,9 +26,7 @@ export const DatasetType = () => {
 				<Badge
 					text={item.title}
 					onClick={() => handleSelect(item.value)}
-					variant={
-						searchParams.get('type') === item.value ? 'filled' : 'outlined'
-					}
+					variant={type === item.value ? 'filled' : 'outlined'}
 				/>
 			))}
 		</WrapperStyled>

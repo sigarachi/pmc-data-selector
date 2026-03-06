@@ -15,7 +15,7 @@ import { useCoordsObserver } from './hooks/use-coords-observer';
 export const Tiles = () => {
 	const { id = '', layerId = '' } = useParams();
 
-	const { time, date, variable, pressure, vmax, vmin } = useSettings();
+	const { time, date, variable, pressure, vmax, vmin, type } = useSettings();
 
 	const [filters] = useState<ParamFilters['filters']>([
 		{ field: 'type', condition: 'equals', value: 'coords' },
@@ -32,10 +32,12 @@ export const Tiles = () => {
 			pressure_level: string;
 			u_vmin?: string;
 			u_vmax?: string;
+			type: string;
 		} = {
 			variable: variable,
 			time: `${date} ${time}`,
 			pressure_level: pressure,
+			type,
 		};
 
 		if (vmax) {
@@ -51,7 +53,7 @@ export const Tiles = () => {
 		}
 
 		return p;
-	}, [vmin, vmax, variable, date, time, pressure]);
+	}, [vmin, vmax, variable, date, time, pressure, type]);
 
 	const { data } = useQuery({
 		queryKey: ['pmc-params', id, filters],

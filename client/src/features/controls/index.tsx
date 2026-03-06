@@ -7,6 +7,7 @@ import { useInitControls } from './hooks/use-init-controls';
 import { Coords } from '@features/map/components/coords';
 import { useEffect } from 'react';
 import { useScale } from '@shared/store/scale';
+import { DatasetType } from './components/dataset-type';
 
 export const Controls = () => {
 	const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ export const Controls = () => {
 			<Outlet />
 			<BottomWrapperStyled>
 				{!hideLegend && <ColorLegend />}
+				<DatasetType />
 				<Coords />
 				{!hideTimeLine && <Timeline />}
 			</BottomWrapperStyled>

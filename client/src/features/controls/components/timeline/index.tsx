@@ -10,6 +10,7 @@ import type { TimeLineProps } from './interfaces';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ParamService } from '@shared/api/services/param';
+import { getDatesInRange } from '@shared/utils/get-dates-in-range';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
 	const { id = '' } = useParams();
@@ -34,26 +35,32 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 	}
 
 	const dateOptions = useMemo(() => {
-		let formation = '';
-		const dates =
+		let formation = new Date(Date.now());
+		let dates =
 			data?.params
 				.filter((item) => item.type === 'date')
 				.map((item) => {
 					if (item.name === 'datetime_formation') {
-						formation = item.value.split(' ')[0];
+						formation = new Date(item.value.split(' ')[0]);
 					}
 
-					return item.value.split(' ')[0];
+					return new Date(item.value.split(' ')[0]);
 				}) ?? [];
 
-		const dateSet = new Set(dates);
+		if (dates.length > 1) {
+			dates = getDatesInRange(formation, dates[1]);
+		}
+
+		const dateSet = new Set<Date>(dates);
 
 		dateSet.add(
-			getPreviousDay(new Date(formation)).toLocaleDateString('us-US', {
-				day: '2-digit',
-				month: '2-digit',
-				year: 'numeric',
-			})
+			new Date(
+				getPreviousDay(formation).toLocaleDateString('us-US', {
+					day: '2-digit',
+					month: '2-digit',
+					year: 'numeric',
+				})
+			)
 		);
 
 		return Array.from(dateSet).sort((a, b) => {
@@ -141,15 +148,19 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 		<TimelineWrapperStyled>
 			<TimeWrapperStyled>
 				{dateOptions.map((item) => (
-					<Fragment key={item}>
+					<Fragment key={item.getDate()}>
 						<Badge
-							variant={item === dateSelected ? 'filled' : 'outlined'}
+							variant={
+								item.toLocaleDateString('us-US') === dateSelected
+									? 'filled'
+									: 'outlined'
+							}
 							text={new Date(item).toLocaleDateString('ru-RU', {
 								year: '2-digit',
 								day: '2-digit',
 								month: '2-digit',
 							})}
-							onClick={() => handleSelectDate(item)}
+							onClick={() => handleSelectDate(item.toLocaleDateString('us-US'))}
 						/>
 					</Fragment>
 				))}

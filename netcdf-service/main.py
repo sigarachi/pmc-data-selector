@@ -14,6 +14,8 @@ import sqlite3
 from pathlib import Path
 import matplotlib.cm as cm
 from scipy.interpolate import RegularGridInterpolator
+from scipy.spatial import cKDTree
+from scipy.interpolate import griddata
 import pandas as pd
 import glob
 import os
@@ -501,51 +503,81 @@ def get_cached_dataset(path):
     return DATASET_CACHE[path]
 
 
+def remap_carra_data(data, lats, lons, target_lat_grid, target_lon_grid):
+    """
+    Пересчет данных CARRA с исходной сетки на целевую
+
+    Parameters:
+    - data: 2D массив данных (original_y, original_x)
+    - lats: 2D массив широт (original_y, original_x)
+    - lons: 2D массив долгот (original_y, original_x)
+    - target_lat_grid: 2D массив целевых широт (256, 256)
+    - target_lon_grid: 2D массив целевых долгот (256, 256)
+
+    Returns:
+    - 2D массив (256, 256) с пересчитанными данными
+    """
+    # Расплющиваем исходные данные
+    points = np.column_stack((lats.ravel(), lons.ravel()))
+    values = data.ravel()
+
+    # Расплющиваем целевую сетку
+    xi = np.column_stack((target_lat_grid.ravel(), target_lon_grid.ravel()))
+
+    # Интерполяция методом ближайшего соседа (быстро и надежно)
+    tile_flat = griddata(
+        points,
+        values,
+        xi,
+        method='nearest',
+        fill_value=np.nan
+    )
+
+    # Возвращаем в исходную форму тайла
+    return tile_flat.reshape(256, 256)
+
+
 def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
     ds = dataset
     var = ds[variable]
 
+    # Извлечение данных
     if 'pressure_level' in var.dims:
         data = var.isel(valid_time=time_idx, pressure_level=level_index).values
-        actual_level = var.pressure_level.values[level_index]
-        print(
-            f"  get_tile_data: using level index {level_index} = {actual_level} hPa")
     else:
         if 'valid_time' in var.dims:
             data = var.isel(valid_time=time_idx).values
         else:
             data = var.values
 
-    print(f"\nData shape before processing: {data.shape}")
-
+    # Приводим к 2D
     if data.ndim != 2:
-        print(f"Reshaping from {data.ndim}D to 2D")
         data = data.squeeze()
         if data.ndim != 2:
-            print(f"  Still not 2D, shape: {data.shape}")
             data = data.reshape(-1, data.shape[-2], data.shape[-1])[0]
-            print(f"  After reshape: {data.shape}")
 
+    # Получаем координаты
     lats = var.latitude.values
     lons = var.longitude.values
 
-    print(
-        f"\nLatitudes: {len(lats)} points from {lats.min():.2f} to {lats.max():.2f}")
-    print(
-        f"Longitudes: {len(lons)} points from {lons.min():.2f} to {lons.max():.2f}")
-    print(f"Data final shape: {data.shape}")
+    # Получаем целевую сетку тайла
+    lon_grid, lat_grid = tile_lonlat_grid(z, x, y)
 
-    # ---- ensure ascending ----
-    if lats[0] > lats[-1]:
-        lats = lats[::-1]
-        data = data[::-1, :]
+    # Для CARRA (2D координаты) используем remap
+    if lats.ndim == 2 and lons.ndim == 2:
+        tile = remap_carra_data(data, lats, lons, lat_grid, lon_grid)
+    else:
+        # Для ERA5 (1D координаты) используем RegularGridInterpolator
+        from scipy.interpolate import RegularGridInterpolator
 
-    if lons[0] > lons[-1]:
-        lons = lons[::-1]
-        data = data[:, ::-1]
+        if lats[0] > lats[-1]:
+            lats = lats[::-1]
+            data = data[::-1, :]
 
-    # ---- build interpolator ----
-    try:
+        if lons[0] > lons[-1]:
+            lons = lons[::-1]
+            data = data[:, ::-1]
+
         interp = RegularGridInterpolator(
             (lats, lons),
             data,
@@ -554,16 +586,10 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
             fill_value=np.nan
         )
 
-        lon_grid, lat_grid = tile_lonlat_grid(z, x, y)
-
         pts = np.stack([lat_grid.ravel(), lon_grid.ravel()], axis=-1)
         tile = interp(pts).reshape(256, 256)
 
-        return tile
-
-    except Exception as e:
-        print(f"ERROR: {e}")
-        raise
+    return tile
 
 
 def compute_variable_stats(ds, variable, time_index, pressure_level):
@@ -648,11 +674,17 @@ def draw_wind_arrows(img, u, v, step=32, scale=2.5):
 
 
 @app.get("/tile/{z}/{x}/{y}")
-async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, u_vmin: Optional[float] = None,
+async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, type: str = "era5", u_vmin: Optional[float] = None,
                u_vmax: Optional[float] = None):
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
+
+    time_tolerance_hours = 1
+
+    if type == "carra":
+        time_tolerance_hours = 3
+
     ds_file = await find_matching_dataset_by_time(
-        time, dataset_type="era5", time_tolerance_hours=1)
+        time, dataset_type=type, time_tolerance_hours=time_tolerance_hours)
 
     if ds_file is None or variable is None:
         return Response(
@@ -682,6 +714,7 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
 
     if variable == 'wind_speed' or variable == 'u' or variable == 'v':
         var = ds[variable]
+
         if 'u' in ds and 'v' in ds and 'pressure_level' in var.dims:
             levels = var.pressure_level.values
             level_index = None
@@ -746,7 +779,8 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
 
             cmap = get_panoply_colormap("NEO_modis_sst_45")
         else:
-            tile_data = get_tile_data(ds, variable, x, y, z, time_idx=0)
+            tile_data = get_tile_data(
+                ds, variable, x, y, z, time_idx=0)
             vmin, vmax = global_vmin, global_vmax
             cmap = get_panoply_colormap("NEO_modis_sst_45")
 
@@ -770,7 +804,7 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
                     f"! Using closest: index {level_index}, level {levels[level_index]} hPa")
 
             tile_data = get_tile_data(
-                ds, variable, x, y, z, time_idx=time_index, level_index=level_index)
+                ds, variable, x, y, z, time_idx=time_index, level_index=level_index,)
 
             if 'valid_time' in var.dims:
                 level_data = var.isel(
@@ -786,7 +820,7 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
             cmap = get_panoply_colormap("NEO_modis_sst_45")
         else:
             tile_data = get_tile_data(
-                ds, variable, x, y, z, time_idx=time_index)
+                ds, variable, x, y, z, time_idx=time_index, type=type)
             vmin, vmax = global_vmin, global_vmax
             cmap = get_panoply_colormap("NEO_modis_sst_45")
 
@@ -838,13 +872,14 @@ async def legend(
     variable: str,
     time: str,
     pressure_level: int = 850,
+    type: str = "era5",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None
 ):
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
 
     ds_file = await find_matching_dataset_by_time(
-        time, dataset_type="era5", time_tolerance_hours=1
+        time, dataset_type=type, time_tolerance_hours=1
     )
 
     if ds_file is None:

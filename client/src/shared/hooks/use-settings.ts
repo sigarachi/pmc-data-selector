@@ -8,6 +8,7 @@ export const useSettings = () => {
 	const [date, setDate] = useState<string>('');
 	const [vmin, setVmin] = useState<string>('');
 	const [vmax, setVmax] = useState<string>('');
+	const [type, setType] = useState<string>('era5');
 	const [variable, setVariable] = useState<string>('z');
 	const [pressure, setPressure] = useState<string>('850');
 
@@ -18,7 +19,11 @@ export const useSettings = () => {
 		const searchPressure = searchParams.get('pressure');
 		const searchVmin = searchParams.get('vmin');
 		const searchVmax = searchParams.get('vmax');
+		const searchType = searchParams.get('type');
 
+		if (searchType) {
+			setType(searchType);
+		}
 		if (searchTime) {
 			setTime(searchTime);
 		}
@@ -50,5 +55,6 @@ export const useSettings = () => {
 		pressure,
 		vmax,
 		vmin,
+		type,
 	};
 };

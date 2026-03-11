@@ -518,23 +518,22 @@ def remap_carra_data(data, lats, lons, target_lat_grid, target_lon_grid):
     - 2D массив (256, 256) с пересчитанными данными
     """
     # Расплющиваем исходные данные
+    from scipy.spatial import cKDTree
     points = np.column_stack((lats.ravel(), lons.ravel()))
     values = data.ravel()
 
-    # Расплющиваем целевую сетку
-    xi = np.column_stack((target_lat_grid.ravel(), target_lon_grid.ravel()))
+    tree = cKDTree(points)
 
-    # Интерполяция методом ближайшего соседа (быстро и надежно)
-    tile_flat = griddata(
-        points,
-        values,
-        xi,
-        method='nearest',
-        fill_value=np.nan
-    )
+    query = np.column_stack((target_lat_grid.ravel(), target_lon_grid.ravel()))
+
+    dist, idx = tree.query(query)
+
+    tile = values[idx].reshape(256, 256)
+
+    tile[dist.reshape(256, 256) > 0.1] = np.nan
 
     # Возвращаем в исходную форму тайла
-    return tile_flat.reshape(256, 256)
+    return tile
 
 
 def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
@@ -569,6 +568,7 @@ def get_tile_data(dataset, variable, x, y, z, time_idx=0, level_index=0):
     else:
         # Для ERA5 (1D координаты) используем RegularGridInterpolator
         from scipy.interpolate import RegularGridInterpolator
+        from scipy.spatial import cKDTree
 
         if lats[0] > lats[-1]:
             lats = lats[::-1]

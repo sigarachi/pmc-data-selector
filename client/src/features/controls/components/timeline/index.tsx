@@ -11,7 +11,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ParamService } from '@shared/api/services/param';
 import { getDaysArray } from '@shared/utils/get-dates-in-range';
-import { getPreviousDay } from '@shared/utils/get-previous-date';
+import { getNextDay, getPreviousDay } from '@shared/utils/get-previous-date';
 import { compareAsc, format } from 'date-fns';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
@@ -35,6 +35,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 		}
 
 		let formation = new Date(Date.now());
+		let death: Date | null = null;
 		let dates =
 			data?.params
 				.filter((item) => item.type === 'date')
@@ -43,16 +44,24 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 						formation = new Date(item.value.split(' ')[0]);
 					}
 
+					if (item.name === 'datetime_death') {
+						death = new Date(item.value.split(' ')[0]);
+					}
+
 					return new Date(item.value.split(' ')[0]);
 				}) ?? [];
 
-		if (dates.length > 1) {
-			dates = getDaysArray(formation, dates[1]);
+		if (death) {
+			dates = getDaysArray(formation, death);
 		}
 
 		const dateSet = new Set<Date>(dates);
 
 		dateSet.add(new Date(format(getPreviousDay(formation), 'MM/dd/yyyy')));
+
+		if (death !== null && new Date(death).getDate() === formation.getDate()) {
+			dateSet.add(new Date(format(getNextDay(formation), 'MM/dd/yyyy')));
+		}
 
 		return Array.from(dateSet).sort(compareAsc);
 	}, [data]);

@@ -11,6 +11,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ParamService } from '@shared/api/services/param';
 import { getDatesInRange } from '@shared/utils/get-dates-in-range';
+import { getPreviousDay } from '@shared/utils/get-previous-date';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
 	const { id = '' } = useParams();
@@ -26,13 +27,6 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 		queryFn: () => ParamService.getList(id),
 		enabled: Boolean(id.length),
 	});
-
-	function getPreviousDay(date = new Date()) {
-		const previous = new Date(date.getTime());
-		previous.setDate(date.getDate() - 1);
-
-		return previous;
-	}
 
 	const dateOptions = useMemo(() => {
 		let formation = new Date(Date.now());

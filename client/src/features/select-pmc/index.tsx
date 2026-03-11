@@ -22,6 +22,7 @@ import { CreatePmcForm } from './form';
 import { useSearch } from '@shared/hooks/use-search';
 import { usePagination } from '@shared/hooks/use-pagination';
 import { roundToHour } from '@shared/utils/round-time';
+import { format } from 'date-fns';
 
 export const SelectPmc = () => {
 	const navigate = useNavigate();
@@ -56,7 +57,7 @@ export const SelectPmc = () => {
 
 	const handleRowClick = useCallback((row: PMC) => {
 		navigate(
-			`/map/${row.id}?date=${row.name.replace('ПМЦ ', '').split(' ')[0]}&time=${roundToHour(new Date(row.name.replace('ПМЦ ', '').trim())).getHours()}:00`
+			`/map/${row.id}?date=${format(new Date(row.name.replace('ПМЦ ', '').split(' ')[0]), 'MM/dd/yyyy')}&time=${roundToHour(new Date(row.name.replace('ПМЦ ', '').trim())).getHours()}:00`
 		);
 	}, []);
 

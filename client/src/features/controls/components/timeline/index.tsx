@@ -120,7 +120,6 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
 	useEffect(() => {
 		const searchDate = searchParams.get('date');
-		console.log(searchDate);
 		if (searchDate) {
 			setDateSelected(searchDate);
 		}

@@ -860,7 +860,7 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
         img = Image.fromarray(rgba, "RGBA")
 
     if variable in ["u", "u10"]:
-        img = draw_wind_arrows(img, u_data, v_data)
+        img = draw_wind_arrows(img, u_data, v_data, scale=0.7, step=24)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -898,10 +898,40 @@ async def legend(
             time_index = i
             break
 
-    # ---- авто статистика (percentiles) ----
-    auto_vmin, auto_vmax = compute_variable_stats(
-        ds, variable, time_index, pressure_level
-    )
+    if variable in ["u", "v"] and "u" in ds and "v" in ds:
+
+        if "pressure_level" in ds["u"].dims:
+            levels = ds["u"].pressure_level.values
+            level_index = np.argmin(
+                np.abs(levels.astype(float) - float(pressure_level)))
+
+            u = ds["u"].isel(valid_time=time_index,
+                             pressure_level=level_index).values
+            v = ds["v"].isel(valid_time=time_index,
+                             pressure_level=level_index).values
+        else:
+            u = ds["u"].isel(valid_time=time_index).values
+            v = ds["v"].isel(valid_time=time_index).values
+
+        wind = np.sqrt(u**2 + v**2)
+
+        auto_vmin = float(np.nanpercentile(wind, 2))
+        auto_vmax = float(np.nanpercentile(wind, 98))
+
+    elif variable in ["u10", "v10"] and "u10" in ds and "v10" in ds:
+
+        u = ds["u10"].isel(valid_time=time_index).values
+        v = ds["v10"].isel(valid_time=time_index).values
+
+        wind = np.sqrt(u**2 + v**2)
+
+        auto_vmin = float(np.nanpercentile(wind, 2))
+        auto_vmax = float(np.nanpercentile(wind, 98))
+
+    else:
+        auto_vmin, auto_vmax = compute_variable_stats(
+            ds, variable, time_index, pressure_level
+        )
 
     # ---- пользовательские пределы имеют приоритет ----
     vmin = float(vmin) if vmin is not None else auto_vmin

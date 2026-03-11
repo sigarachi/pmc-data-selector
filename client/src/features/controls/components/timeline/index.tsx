@@ -142,12 +142,12 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 						<Fragment key={item.getDate()}>
 							<Badge
 								variant={
-									format(item, 'MM/dd/YYYY') === dateSelected
+									format(item, 'MM/dd/yyyy') === dateSelected
 										? 'filled'
 										: 'outlined'
 								}
 								text={format(new Date(item), 'dd.MM.yyyy')}
-								onClick={() => handleSelectDate(format(item, 'MM/dd/YYYY'))}
+								onClick={() => handleSelectDate(format(item, 'MM/dd/yyyy'))}
 							/>
 						</Fragment>
 					))}

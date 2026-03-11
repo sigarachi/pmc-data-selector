@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ParamService } from '@shared/api/services/param';
 import { getDaysArray } from '@shared/utils/get-dates-in-range';
 import { getPreviousDay } from '@shared/utils/get-previous-date';
+import { compareAsc, format } from 'date-fns';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
 	const { id = '' } = useParams();
@@ -29,6 +30,10 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 	});
 
 	const dateOptions = useMemo(() => {
+		if (!data) {
+			return [];
+		}
+
 		let formation = new Date(Date.now());
 		let dates =
 			data?.params
@@ -47,19 +52,9 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
 		const dateSet = new Set<Date>(dates);
 
-		dateSet.add(
-			new Date(
-				getPreviousDay(formation).toLocaleDateString('us-US', {
-					day: '2-digit',
-					month: '2-digit',
-					year: 'numeric',
-				})
-			)
-		);
+		dateSet.add(new Date(format(getPreviousDay(formation), 'MM/dd/yyyy')));
 
-		return Array.from(dateSet).sort((a, b) => {
-			return Number(new Date(a)) - Number(new Date(b));
-		});
+		return Array.from(dateSet).sort(compareAsc);
 	}, [data]);
 
 	const handleSelect = useCallback(
@@ -123,8 +118,6 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 		}
 	}, [searchParams]);
 
-	console.log(dateOptions);
-
 	useEffect(() => {
 		const searchDate = searchParams.get('date');
 		console.log(searchDate);
@@ -143,25 +136,25 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
 	return (
 		<TimelineWrapperStyled>
-			<TimeWrapperStyled>
-				{dateOptions.map((item) => (
-					<Fragment key={item.getDate()}>
-						<Badge
-							variant={
-								item.toLocaleDateString('us-US') === dateSelected
-									? 'filled'
-									: 'outlined'
-							}
-							text={new Date(item).toLocaleDateString('ru-RU', {
-								year: '2-digit',
-								day: '2-digit',
-								month: '2-digit',
-							})}
-							onClick={() => handleSelectDate(item.toLocaleDateString('us-US'))}
-						/>
-					</Fragment>
-				))}
-			</TimeWrapperStyled>
+			{Boolean(dateOptions.length) && (
+				<TimeWrapperStyled>
+					{dateOptions.map((item) => (
+						<Fragment key={item.getDate()}>
+							<Badge
+								variant={
+									item.toLocaleDateString('us-US') === dateSelected
+										? 'filled'
+										: 'outlined'
+								}
+								text={format(new Date(item), 'dd.MM.yyyy')}
+								onClick={() =>
+									handleSelectDate(item.toLocaleDateString('us-US'))
+								}
+							/>
+						</Fragment>
+					))}
+				</TimeWrapperStyled>
+			)}
 			<LineWrapperStyled>
 				<Button
 					size="inherit"

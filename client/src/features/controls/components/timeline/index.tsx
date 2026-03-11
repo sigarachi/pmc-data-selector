@@ -10,7 +10,7 @@ import type { TimeLineProps } from './interfaces';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ParamService } from '@shared/api/services/param';
-import { getDatesInRange } from '@shared/utils/get-dates-in-range';
+import { getDaysArray } from '@shared/utils/get-dates-in-range';
 import { getPreviousDay } from '@shared/utils/get-previous-date';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
@@ -42,7 +42,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 				}) ?? [];
 
 		if (dates.length > 1) {
-			dates = getDatesInRange(formation, dates[1]);
+			dates = getDaysArray(formation, dates[1]);
 		}
 
 		const dateSet = new Set<Date>(dates);

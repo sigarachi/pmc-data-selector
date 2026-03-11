@@ -1,15 +1,11 @@
-export const getDatesInRange = (
-	startDate: Date,
-	endDate: Date
-): Array<Date> => {
-	const date = new Date(startDate.getTime());
-
-	const dates: Array<Date> = [];
-
-	while (date <= endDate) {
-		dates.push(new Date(date));
-		date.setDate(date.getDate() + 1);
+export const getDaysArray = (start: Date, end: Date): Array<Date> => {
+	const arr = [];
+	for (
+		const dt = new Date(start);
+		dt <= new Date(end);
+		dt.setDate(dt.getDate() + 1)
+	) {
+		arr.push(new Date(dt));
 	}
-
-	return dates;
+	return arr;
 };

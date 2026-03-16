@@ -35,11 +35,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #3a6bff, #0d4aff); /* primary base to 500 */
+    background: linear-gradient(to bottom, #4A6FA5, #4A6FA5); /* primary base to 500 */
     border-radius: 5px;
     border: 2px solid #f0f5ff;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #0d4aff, #0026b7); /* primary 500 to 600 */
+    background: linear-gradient(to bottom, #4A6FA5, #4A6FA5); /* primary 500 to 600 */
 }

@@ -1,91 +1,91 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Router } from "./router";
-import { ThemeProvider, ecosystemTheme } from "@university-ecosystem/ui-kit";
-import type { Theme } from "@emotion/react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Router } from './router';
+import { ThemeProvider, ecosystemTheme } from '@university-ecosystem/ui-kit';
+import type { Theme } from '@emotion/react';
 
 const client = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchInterval: Infinity,
-      staleTime: Infinity,
-      refetchOnMount: false,
-      retry: false,
-    },
-  },
+	defaultOptions: {
+		queries: {
+			refetchInterval: Infinity,
+			staleTime: Infinity,
+			refetchOnMount: false,
+			retry: false,
+		},
+	},
 });
 
 const theme: Theme = {
-  ...ecosystemTheme,
-  colors: {
-    primary: {
-      base: "#003ef8",
-      100: "#f0f5ff",
-      200: "#c7d6ff",
-      300: "#9db6ff",
-      400: "#3a6bff",
-      500: "#0d4aff",
-      600: "#0026b7",
-      700: "#001064",
-    },
-    secondary: {
-      base: "#1f5dff",
-      100: "#ebf0ff",
-      200: "#c1d1ff",
-      300: "#96b1ff",
-      400: "#6c90ff",
-      500: "#1f5dff",
-      600: "#0033b2",
-      700: "#00195d",
-    },
-    tertiary: {
-      base: "#8db3ff",
-      100: "#e0ebff",
-      200: "#8db3ff",
-      300: "#5d92ff",
-      400: "#2d70ff",
-      500: "#0047dc",
-      600: "#002a88",
-      700: "#001444",
-    },
-    quaternary: {
-      base: "#00b5e6",
-      100: "#baefff",
-      200: "#00b5e6",
-      300: "#0092ba",
-      400: "#007191",
-      500: "#005163",
-      600: "#003340",
-      700: "#001821",
-    },
-    grey: {
-      base: "#7e7e85",
-      100: "#f1f1f1",
-      200: "#cacacd",
-      300: "#a3a3a8",
-      400: "#7e7e85",
-      500: "#5b5b63",
-      600: "#3a3a40",
-      700: "#1b1b1f",
-    },
-    contrast: {
-      base: "#4F9CFF",
-      300: "#7BB8FF",
-      700: "#1A5A89",
-    },
-    error: {
-      base: "#eb5757",
-    },
-  },
+	...ecosystemTheme,
+	colors: {
+		primary: {
+			base: '#4A6FA5',
+			100: '#F5F8FF',
+			200: '#E1E9F5',
+			300: '#B8CCE8',
+			400: '#8DA8D1',
+			500: '#4A6FA5',
+			600: '#2E4A73',
+			700: '#1A2F4A',
+		},
+		secondary: {
+			base: '#6B8CAA',
+			100: '#F0F4F9',
+			200: '#DAE5F0',
+			300: '#B7CBDF',
+			400: '#94B0CC',
+			500: '#6B8CAA',
+			600: '#4A657A',
+			700: '#2D4050',
+		},
+		tertiary: {
+			base: '#9FB7C9',
+			100: '#F2F6FA',
+			200: '#E0E9F2',
+			300: '#C4D4E3',
+			400: '#9FB7C9',
+			500: '#7A95AD',
+			600: '#566E84',
+			700: '#35495C',
+		},
+		quaternary: {
+			base: '#B8CFE0',
+			100: '#F5F9FD',
+			200: '#E8F0F7',
+			300: '#D4E2EF',
+			400: '#B8CFE0',
+			500: '#8DA9C2',
+			600: '#5F7F9C',
+			700: '#3B556B',
+		},
+		grey: {
+			base: '#8F9AA7',
+			100: '#F8F9FA',
+			200: '#E9ECF0',
+			300: '#D2D8E0',
+			400: '#B5BEC9',
+			500: '#8F9AA7',
+			600: '#65717E',
+			700: '#3C4856',
+		},
+		contrast: {
+			base: '#D4B68A',
+			300: '#E5CDAD',
+			700: '#9E7B5C',
+		},
+		error: {
+			base: '#E6A3A3',
+		},
+	},
 };
 
 function App() {
-  return (
-    <QueryClientProvider client={client}>
-      <ThemeProvider theme={theme}>
-        <Router />
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+	return (
+		<QueryClientProvider client={client}>
+			<ThemeProvider theme={theme}>
+				<Router />
+			</ThemeProvider>
+		</QueryClientProvider>
+	);
 }
 
 export default App;

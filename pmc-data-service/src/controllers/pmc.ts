@@ -9,6 +9,7 @@ import { CsvParamName, CsvParamNameMap } from "../models/param";
 import { PmcFilters } from "../models/pmc";
 import { PaginatedRequest } from "../models/common";
 import { getParamType } from "../utils/get-param-type";
+import logger from "../libs/logger";
 
 export class PmcController {
   static async getList(
@@ -20,6 +21,10 @@ export class PmcController {
       const { filters } = req.body;
       const { page, pageSize } = req.query;
 
+      logger.info(
+        `[PMC] Get list filters=${filters}, page=${page}, pageSize=${pageSize}`,
+      );
+
       const offset = Number(page) || 1;
       const limit = Number(pageSize) || 10;
 
@@ -29,15 +34,14 @@ export class PmcController {
 
       const totalPages = Math.ceil(count / limit);
 
-      return res
-        .status(200)
-        .json({
-          list: data,
-          page,
-          pageSize,
-          isLastPage: offset === totalPages,
-        });
+      return res.status(200).json({
+        list: data,
+        page,
+        pageSize,
+        isLastPage: offset === totalPages,
+      });
     } catch (e) {
+      logger.error(e);
       next(e);
     }
   }
@@ -45,6 +49,8 @@ export class PmcController {
   static async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      logger.info(`[PMC] Get id=${id}`);
 
       if (!id) {
         throw new Error("No id provided");
@@ -54,6 +60,7 @@ export class PmcController {
 
       return res.status(200).json({ pmc: data });
     } catch (e) {
+      logger.error(e);
       next(e);
     }
   }
@@ -66,6 +73,8 @@ export class PmcController {
     try {
       const payload = req.body;
 
+      logger.info(`[PMC] Create body=${JSON.stringify(payload)}`);
+
       if (!payload) {
         throw new Error("error in request body");
       }
@@ -74,6 +83,7 @@ export class PmcController {
 
       return res.status(200).json(data);
     } catch (e) {
+      logger.error(e);
       next(e);
     }
   }
@@ -106,7 +116,7 @@ export class PmcController {
           Object.keys(item).forEach((value: string) => {
             const field = value as CsvParamName;
 
-            if(!item[field]) {
+            if (!item[field]) {
               return;
             }
 
@@ -125,6 +135,7 @@ export class PmcController {
 
       return res.status(200);
     } catch (e) {
+      logger.error(e);
       next(e);
     }
   }

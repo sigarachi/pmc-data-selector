@@ -23,13 +23,12 @@ import psycopg
 import json
 from contextlib import asynccontextmanager
 from environs import Env
+from opensearch_logger import OpenSearchHandler
 import os
 import psycopg_pool
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 FONT_PATH = Path(__file__).parent / "assets/fonts/Inter.ttf"
 
@@ -68,6 +67,22 @@ CACHE_LOCK = threading.RLock()
 MAX_CACHE_SIZE = 3
 CACHE_TTL = 300
 DB_DSN = os.environ.get('DB_URL')
+
+handler = OpenSearchHandler(
+    index_name="netcdf-service",
+    hosts=[os.environ.get('OPENSEARCH_URL')],
+    http_auth=(os.environ.get('OPENSEARCH_USERNAME'),
+               os.environ.get('OPENSEARCH_PASSWORD')),
+    http_compress=True,
+    use_ssl=True,
+    verify_certs=False,
+    ssl_assert_hostname=False,
+    ssl_show_warn=False,
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 datasets = {}
 
@@ -178,7 +193,7 @@ def _extract_dataset_info(
             return dataset_type, dataset_time, variables, time_values
 
     except Exception as e:
-        print(f"⚠ Ошибка при чтении {file_path}: {e}")
+        logger.error(f"Error in reading file {file_path}: {e}")
         import traceback
         traceback.print_exc()
         return None, None, [], []
@@ -676,6 +691,9 @@ def draw_wind_arrows(img, u, v, step=32, scale=2.5):
 @app.get("/tile/{z}/{x}/{y}")
 async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level: int = 850, type: str = "era5", u_vmin: Optional[float] = None,
                u_vmax: Optional[float] = None):
+    logger.info(
+        f"[Tile]: variable={variable}, time={time}, pressure_level={pressure_level}, type={type}")
+
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
 
     time_tolerance_hours = 1
@@ -687,6 +705,8 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
         time, dataset_type=type, time_tolerance_hours=time_tolerance_hours)
 
     if ds_file is None or variable is None:
+        logger.error(
+            f"[Tile] No data found: variable={variable}, time={time}, pressure_level={pressure_level}, type={type}")
         return Response(
             content=make_no_data_tile(),
             media_type="image/png"
@@ -876,6 +896,8 @@ async def legend(
     vmin: Optional[float] = None,
     vmax: Optional[float] = None
 ):
+    logger.info(
+        f"[Legend]: variable={variable}, time={time}, pressure_level={pressure_level}, type={type}, vmin={vmin}, vmax={vmax}")
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
 
     ds_file = await find_matching_dataset_by_time(

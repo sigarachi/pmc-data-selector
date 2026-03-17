@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useToggle } from '@university-ecosystem/ui-kit';
 import { Fragment, useMemo, useState } from 'react';
 import { Circle, CircleMarker, Popup, TileLayer } from 'react-leaflet';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { Drawer } from '@features/map/components/drawer';
 import type { ParamFilters } from '@shared/api/models/param';
@@ -14,6 +14,11 @@ import { useCoordsObserver } from './hooks/use-coords-observer';
 
 export const Tiles = () => {
 	const { id = '', layerId = '' } = useParams();
+	const [searchParams] = useSearchParams();
+
+	const hidePoints =
+		!searchParams.get('showPoints') ||
+		searchParams.get('showPoints') === 'false';
 
 	const { time, date, variable, pressure, vmax, vmin, type } = useSettings();
 
@@ -95,6 +100,7 @@ export const Tiles = () => {
 			)}
 			{data?.params &&
 				radiuses &&
+				!hidePoints &&
 				data.params.map((item) => (
 					<Fragment key={item.id}>
 						{item.value && (

@@ -69,6 +69,11 @@ export const Tiles = () => {
 
 	const { flag: isLoading, toggleOn, toggleOff } = useToggle();
 
+	const radius = useMemo(
+		() => radiuses?.params.find((item) => item.name === 'radius_km'),
+		[radiuses]
+	);
+
 	useCoordsObserver();
 
 	return (
@@ -97,16 +102,21 @@ export const Tiles = () => {
 								key={item.id}
 								center={item.value.trim().split(',').reverse()}
 								pathOptions={{
-									fillColor: 'white',
+									fillColor: item.name === 'formation_coords' ? 'red' : 'black',
+									color: item.name === 'formation_coords' ? 'red' : 'black',
 								}}>
 								<Popup>{item.title}</Popup>
 							</CircleMarker>
 						)}
 
-						{radiuses.params.length && (
+						{radius && (
 							<Circle
 								center={item.value.trim().split(',').reverse()}
-								radius={Number(radiuses.params[0].value) * 1000}
+								radius={Number(radius.value) * 1000}
+								pathOptions={{
+									fillColor: item.name === 'formation_coords' ? 'red' : 'black',
+									color: item.name === 'formation_coords' ? 'red' : 'black',
+								}}
 							/>
 						)}
 					</Fragment>

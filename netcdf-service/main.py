@@ -650,7 +650,7 @@ def make_no_data_tile(text: str = "Нет данных") -> bytes:
     return buf.getvalue()
 
 
-def draw_wind_arrows(img, u, v, step=32, scale=2.5):
+def draw_wind_arrows(img, u, v, step=32, scale=2.5, fixed_length=10):
     draw = ImageDraw.Draw(img)
 
     h, w = u.shape
@@ -666,8 +666,16 @@ def draw_wind_arrows(img, u, v, step=32, scale=2.5):
             x0 = i
             y0 = j
 
-            x1 = x0 + uu * scale
-            y1 = y0 - vv * scale
+            speed = np.sqrt(uu**2 + vv**2)
+
+            if speed > 0:
+                u_norm = uu / speed
+                v_norm = vv / speed
+
+                x1 = x0 + u_norm * fixed_length
+                y1 = y0 - v_norm * fixed_length
+            else:
+                continue
 
             draw.line((x0, y0, x1, y1), fill=(0, 0, 0, 255), width=2)
 

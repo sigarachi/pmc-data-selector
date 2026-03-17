@@ -15,7 +15,9 @@ export class ParamsController {
 
       const { filters } = req.body;
 
-      logger.info(`[Param] Get list pmcId=${pmcId}, filters=${filters}`);
+      logger.info(
+        `[Param] Get list pmcId=${pmcId}, filters=${JSON.stringify(filters)}`,
+      );
 
       if (!pmcId) {
         throw new Error("No pmc found");

@@ -22,7 +22,7 @@ export class PmcController {
       const { page, pageSize } = req.query;
 
       logger.info(
-        `[PMC] Get list filters=${filters}, page=${page}, pageSize=${pageSize}`,
+        `[PMC] Get list filters=${JSON.stringify(filters)}, page=${page}, pageSize=${pageSize}`,
       );
 
       const offset = Number(page) || 1;

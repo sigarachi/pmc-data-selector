@@ -1,4 +1,9 @@
-import type { CreateParam, Param, ParamType } from '@shared/api/models/param';
+import type {
+	CreateParam,
+	Param,
+	ParamName,
+	ParamType,
+} from '@shared/api/models/param';
 import { ParamService } from '@shared/api/services/param';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
@@ -31,7 +36,7 @@ export const usePmcData = (id: string, onSuccess: VoidFunction): UsePmcData => {
 
 			mutate({
 				pmcId: id,
-				name,
+				name: name as ParamName,
 				value,
 				title: '',
 				type: String(type[0].value) as ParamType,

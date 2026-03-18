@@ -59,9 +59,7 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 
 		dateSet.add(new Date(format(getPreviousDay(formation), 'MM/dd/yyyy')));
 
-		if (death === null || new Date(death).getDate() === formation.getDate()) {
-			dateSet.add(new Date(format(getNextDay(formation), 'MM/dd/yyyy')));
-		}
+		dateSet.add(new Date(format(getNextDay(death ?? formation), 'MM/dd/yyyy')));
 
 		return Array.from(dateSet).sort(compareAsc);
 	}, [data]);

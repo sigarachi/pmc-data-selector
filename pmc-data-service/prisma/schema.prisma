@@ -8,43 +8,40 @@ datasource db {
 }
 
 model PMC {
-  id        String  @id @default(uuid()) @db.Uuid
-  name      String  @unique
-  hasTracks Boolean @default(false)
-  params    Param[]
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  hasTracks Boolean  @default(false)
+  dateTime  DateTime @default(now())
   layers    Layer[]
+  params    Param[]
 }
 
 model Param {
   id    String    @id @default(uuid()) @db.Uuid
   name  String
-  title String    @default("")
   value String
   type  ParamType
   pmcId String    @db.Uuid
+  title String    @default("")
   pmc   PMC       @relation(fields: [pmcId], references: [id], onDelete: Cascade)
 }
 
 model Layer {
-  id   String   @id @default(uuid()) @db.Uuid
-  name String
-  date DateTime @default(now())
-
+  id     String   @id @default(uuid()) @db.Uuid
+  name   String
+  pmcId  String   @db.Uuid
+  date   DateTime @default(now())
+  pmc    PMC      @relation(fields: [pmcId], references: [id], onDelete: Cascade)
   marker Marker[]
-
-  pmcId String @db.Uuid
-  pmc   PMC    @relation(fields: [pmcId], references: [id], onDelete: Cascade)
 }
 
 model Marker {
-  id   String     @id @default(uuid()) @db.Uuid
-  name String
-  type MarkerType
-
-  polygons Json @default("{}")
-
-  layerId String @db.Uuid
-  layer   Layer  @relation(fields: [layerId], references: [id], onDelete: Cascade)
+  id       String     @id @default(uuid()) @db.Uuid
+  name     String
+  type     MarkerType
+  layerId  String     @db.Uuid
+  polygons Json       @default("{}")
+  layer    Layer      @relation(fields: [layerId], references: [id], onDelete: Cascade)
 }
 
 enum ParamType {

@@ -88,7 +88,7 @@ export const Tiles = () => {
 			{layerId && <Drawer />}
 			{variable && (
 				<TileLayer
-					opacity={0.7}
+					opacity={0.5}
 					eventHandlers={{
 						loading: toggleOn,
 						load: toggleOff,

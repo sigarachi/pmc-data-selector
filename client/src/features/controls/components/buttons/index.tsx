@@ -44,9 +44,9 @@ export const Buttons = () => {
 				icon={<HiOutlineLocationMarker />}
 				size="inherit"
 				onlyIcon
-				onClick={() => handleChange('showPoints')}
+				onClick={() => handleChange('showRadius')}
 				variant={
-					searchParams.get('showPoints') === 'true' ? 'filled' : 'secondary'
+					searchParams.get('showRadius') === 'true' ? 'filled' : 'secondary'
 				}
 			/>
 		</ButtonsWrapperStyled>

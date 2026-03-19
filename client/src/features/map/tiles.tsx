@@ -16,9 +16,9 @@ export const Tiles = () => {
 	const { id = '', layerId = '' } = useParams();
 	const [searchParams] = useSearchParams();
 
-	const hidePoints =
-		!searchParams.get('showPoints') ||
-		searchParams.get('showPoints') === 'false';
+	const hideRadius =
+		!searchParams.get('showRadius') ||
+		searchParams.get('showRadius') === 'false';
 
 	const { time, date, variable, pressure, vmax, vmin, type } = useSettings();
 
@@ -100,7 +100,6 @@ export const Tiles = () => {
 			)}
 			{data?.params &&
 				radiuses &&
-				!hidePoints &&
 				data.params.map((item) => (
 					<Fragment key={item.id}>
 						{item.value && (
@@ -115,7 +114,7 @@ export const Tiles = () => {
 							</CircleMarker>
 						)}
 
-						{radius && (
+						{!hideRadius && radius && (
 							<Circle
 								center={item.value.trim().split(',').reverse()}
 								radius={Number(radius.value) * 1000}

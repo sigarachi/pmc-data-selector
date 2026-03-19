@@ -13,8 +13,8 @@ export const useInitControls = () => {
 			searchParams.set('showTimeline', 'true');
 			setSearchParams(searchParams);
 		}
-		if (!searchParams.get('showPoints')) {
-			searchParams.set('showPoints', 'true');
+		if (!searchParams.get('showRadius')) {
+			searchParams.set('showRadius', 'true');
 			setSearchParams(searchParams);
 		}
 	}, [searchParams]);

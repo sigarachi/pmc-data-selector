@@ -1,6 +1,6 @@
 import prisma from "@config/db";
-import { CreateParamDto } from "../models/param";
-import { DbFilter } from "../models/common";
+import { CreateParamDto } from "@models/param";
+import { DbFilter } from "@models/common";
 
 export const getList = async (
   pmcId: string,

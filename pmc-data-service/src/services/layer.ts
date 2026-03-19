@@ -1,9 +1,13 @@
-import { getList, getById, create, deleteLayer } from "@db/layers";
+import { getList, getById, create, deleteLayer, getAll } from "@db/layers";
 import { CreateLayerDto } from "../models/layer";
 
 export class LayerService {
   static async getList(pmcId: string) {
     return getList(pmcId);
+  }
+
+  static async getAll() {
+    return getAll();
   }
 
   static async getById(id: string) {

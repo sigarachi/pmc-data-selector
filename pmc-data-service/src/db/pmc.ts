@@ -1,5 +1,5 @@
 import prisma from "@config/db";
-import { DbFilter } from "../models/common";
+import { DbFilter } from "@models/common";
 
 export const getList = async (
   take: number,

@@ -90,6 +90,8 @@
 			"@services/*": ["./src/services/*"],
 			"@db/*": ["./src/db/*"],
 			"@config/*": ["./src/config/*"],
+			"@libs/*": ["./src/libs/*"],
+			"@models/*": ["./src/models/*"],
 		}	
 	},
 	"include": ["src/**/*"],

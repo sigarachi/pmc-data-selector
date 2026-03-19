@@ -44,6 +44,14 @@ model Marker {
   layer    Layer      @relation(fields: [layerId], references: [id], onDelete: Cascade)
 }
 
+model File {
+  id             String     @id @default(uuid()) @db.Uuid
+  name           String     @default("")
+  generationDate DateTime   @default(now())
+  status         FileStatus @default(accepted)
+  path           String     @default("")
+}
+
 enum ParamType {
   coords
   number
@@ -54,4 +62,11 @@ enum ParamType {
 enum MarkerType {
   poly
   point
+}
+
+enum FileStatus {
+  accepted
+  running
+  done
+  error
 }

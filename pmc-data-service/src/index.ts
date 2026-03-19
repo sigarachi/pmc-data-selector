@@ -8,6 +8,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import http from "http";
 import router from "./routes";
+import { amqp } from "@libs/amqp";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use(fileUpload({ createParentPath: true }));
 
 app.use("/", router);
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  await amqp.connect();
   console.log(`App has been started on port ${PORT}`);
 });

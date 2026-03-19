@@ -1,5 +1,5 @@
 import prisma from "@config/db";
-import { CreateMarkerDto } from "../models/marker";
+import { CreateMarkerDto } from "@models/marker";
 
 export const getList = async (layerId: string) =>
   prisma.marker.findMany({

@@ -39,7 +39,7 @@ export const PmcData = () => {
 			</Text>
 
 			{options.map((item) => (
-				<Text variant="body1" key={item.value}>
+				<Text variant="body1" key={item.value} textAlign="center">
 					{item.type === 'date' ? (
 						<>
 							{item.title} :{' '}

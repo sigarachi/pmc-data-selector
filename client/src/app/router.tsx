@@ -1,28 +1,15 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-} from "react-router-dom";
-import { MainPage } from "../pages/main";
-import { SelectPmcPage } from "../pages/select-pmc";
-import { DrawControls } from "@features/draw-controls";
-import { SideBar } from "@features/controls/components/sidebar";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { MainPage } from '../pages/main';
+import { SelectPmcPage } from '../pages/select-pmc';
 
 export const Router = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="map" element={<MainPage />}>
-          <Route path=":id" element={<Outlet />}>
-            <Route path="" index element={<SideBar />} />
-            <Route path="edit/:layerId" element={<DrawControls />} />
-          </Route>
-        </Route>
-        <Route path="/" element={<SelectPmcPage />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </BrowserRouter>
-  );
+	return (
+		<BrowserRouter>
+			<Routes>
+				<Route path="/" element={<SelectPmcPage />} />
+				<Route path="map/:id" element={<MainPage />} />
+				<Route path="*" element={<Navigate to="/" />} />
+			</Routes>
+		</BrowserRouter>
+	);
 };

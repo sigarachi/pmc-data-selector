@@ -1,13 +1,13 @@
 import { ColorLegend } from '@features/controls/components/palette';
-import { Outlet, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Buttons } from './components/buttons';
-import { BottomWrapperStyled } from './controls.style';
 import { Timeline } from './components/timeline';
 import { useInitControls } from './hooks/use-init-controls';
 import { Coords } from '@features/map/components/coords';
 import { useEffect } from 'react';
 import { useScale } from '@shared/store/scale';
 import { DatasetType } from './components/dataset-type';
+import { BottomWrapperStyled } from './controls.style';
 
 export const Controls = () => {
 	const [searchParams] = useSearchParams();
@@ -32,7 +32,6 @@ export const Controls = () => {
 	return (
 		<>
 			<Buttons />
-			<Outlet />
 			<BottomWrapperStyled>
 				{!hideLegend && <ColorLegend />}
 				<DatasetType />

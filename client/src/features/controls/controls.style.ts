@@ -1,21 +1,20 @@
 import styled from '@emotion/styled';
 
-export const ControlsWrapperStyled = styled.div`
-	position: absolute;
+export const ControlsWrapperStyled = styled.div<{ opened: boolean }>`
 	height: 100%;
-
-	right: 0px;
-	top: 0px;
 
 	display: flex;
 	flex-direction: column;
 
+	${({ opened }) => opened && `min-width: 350px;`}
+
 	background-color: white;
-	z-index: 100;
 
 	padding: 16px;
 
 	align-items: center;
+
+	overflow-y: auto;
 
 	gap: 8px;
 
@@ -25,8 +24,6 @@ export const ControlsWrapperStyled = styled.div`
 `;
 
 export const BottomWrapperStyled = styled.div`
-	position: absolute;
-	bottom: 0;
 	width: 100%;
 
 	display: flex;

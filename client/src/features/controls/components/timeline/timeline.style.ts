@@ -1,45 +1,47 @@
-import styled from "@emotion/styled";
+import styled from '@emotion/styled';
 
 export const TimelineWrapperStyled = styled.div`
-  width: 100%;
+	width: 100%;
 
-  max-height: fit-content;
-  height: fit-content;
+	max-height: fit-content;
+	height: fit-content;
 
-  z-index: 100;
+	z-index: 100;
 
-  display: flex;
-  flex-direction: column;
+	display: flex;
+	flex-direction: column;
 
-  gap: 8px;
+	padding: 12px 8px;
+
+	gap: 8px;
 `;
 
 export const TimeWrapperStyled = styled.div`
-  width: 100%;
-  gap: 8px;
+	width: 100%;
+	gap: 8px;
 
-  overflow-x: auto;
+	overflow-x: auto;
 
-  display: flex;
+	display: flex;
 
-  & > :first-child {
-    border-left: 1px solid gray;
-  }
+	& > :first-child {
+		border-left: 1px solid gray;
+	}
 
-  & > * {
-    flex: 1 1 0;
+	& > * {
+		flex: 1 1 0;
 
-    display: flex;
+		display: flex;
 
-    justify-content: center;
+		justify-content: center;
 
-    border-right: 1px solid gray;
+		border-right: 1px solid gray;
 
-    cursor: pointer;
-  }
+		cursor: pointer;
+	}
 `;
 
 export const LineWrapperStyled = styled.div`
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
 `;

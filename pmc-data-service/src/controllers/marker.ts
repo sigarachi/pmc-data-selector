@@ -79,7 +79,7 @@ export class MarkerController {
         { field: "type", value: type, condition: "equals" },
       ]);
 
-      if (markerCandidate) {
+      if (markerCandidate.length) {
         throw new Error("Marker already created");
       }
 

@@ -1,10 +1,15 @@
 import prisma from "@config/db";
+import { DbFilter } from "@models/common";
 import { CreateMarkerDto } from "@models/marker";
 
-export const getList = async (layerId: string) =>
+export const getList = async (
+  pmcId: string,
+  filters: DbFilter<Omit<CreateMarkerDto, "polygons">>,
+) =>
   prisma.marker.findMany({
     where: {
-      layerId,
+      pmcId,
+      ...filters,
     },
   });
 

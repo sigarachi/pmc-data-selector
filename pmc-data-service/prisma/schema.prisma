@@ -12,7 +12,7 @@ model PMC {
   name      String   @unique
   hasTracks Boolean  @default(false)
   dateTime  DateTime @default(now())
-  layers    Layer[]
+  markers   Marker[]
   params    Param[]
 }
 
@@ -26,22 +26,14 @@ model Param {
   pmc   PMC       @relation(fields: [pmcId], references: [id], onDelete: Cascade)
 }
 
-model Layer {
-  id     String   @id @default(uuid()) @db.Uuid
-  name   String
-  pmcId  String   @db.Uuid
-  date   DateTime @default(now())
-  pmc    PMC      @relation(fields: [pmcId], references: [id], onDelete: Cascade)
-  marker Marker[]
-}
-
 model Marker {
   id       String     @id @default(uuid()) @db.Uuid
   name     String
   type     MarkerType
-  layerId  String     @db.Uuid
+  dateTime DateTime   @default(now())
+  pmcId    String     @db.Uuid
   polygons Json       @default("{}")
-  layer    Layer      @relation(fields: [layerId], references: [id], onDelete: Cascade)
+  pmc      PMC        @relation(fields: [pmcId], references: [id], onDelete: Cascade)
 }
 
 model File {

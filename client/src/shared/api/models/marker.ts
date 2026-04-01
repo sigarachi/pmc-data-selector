@@ -1,24 +1,29 @@
-export type MarkerType = "point" | "poly";
+import type { FilteredRequest } from '../common/interfaces';
+
+export type MarkerType = 'point' | 'poly';
 
 export type Marker = {
-  id: string;
-  name: string;
-  type: MarkerType;
-  polygons: Array<Array<number>>;
+	id: string;
+	name: string;
+	type: MarkerType;
+	dateTime: Date;
+	polygons: Array<Array<number>>;
 };
 
-export type CreateMarker = Omit<Marker, "id"> & {
-  layerId: string;
+export type MarkerFilters = FilteredRequest<Marker, 'dateTime'>;
+
+export type CreateMarker = Omit<Marker, 'id'> & {
+	pmcId: string;
 };
 
 export type UpdateMarker = Partial<CreateMarker> & {
-  id: string;
+	id: string;
 };
 
 export type MarkerListResponse = {
-  markers: Marker[];
+	markers: Marker[];
 };
 
 export type MarkerResponse = {
-  marker: Marker;
+	marker: Marker;
 };

@@ -1,26 +1,34 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateMarkerDto } from "../models/marker";
-import { LayerService } from "@services/layer";
+import { CreateMarkerDto, MarkerFilters } from "../models/marker";
 import { MarkerService } from "@services/marker";
 import logger from "../libs/logger";
+import { PmcService } from "@services/pmc";
 
 export class MarkerController {
-  static async getList(req: Request, res: Response, next: NextFunction) {
+  static async getList(
+    req: Request<never, never, MarkerFilters>,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const { layerId } = req.params;
-      logger.info(`[Marker] Get list layerId=${layerId}`);
+      const { pmcId } = req.params;
+      const { filters } = req.body;
 
-      if (!layerId) {
-        throw new Error("No layer found");
+      logger.info(
+        `[Marker] Get list pmcId=${pmcId}, filters=${JSON.stringify(filters)}`,
+      );
+
+      if (!pmcId) {
+        throw new Error("No pmc found");
       }
 
-      const candidate = await LayerService.getById(layerId);
+      const candidate = await PmcService.getById(pmcId);
 
       if (!candidate) {
-        throw new Error("No layer found");
+        throw new Error("No pmc found");
       }
 
-      const data = await MarkerService.getList(layerId);
+      const data = await MarkerService.getList(pmcId, filters);
 
       return res
         .status(200)
@@ -51,26 +59,35 @@ export class MarkerController {
     next: NextFunction,
   ) {
     try {
-      const { layerId, name, polygons, type } = req.body;
+      const { pmcId, name, polygons, type, dateTime } = req.body;
 
       logger.info(
-        `[Marker] Create layerId=${layerId}, ${JSON.stringify(req.body)}`,
+        `[Marker] Create layerId=${pmcId}, ${JSON.stringify(req.body)}`,
       );
 
-      if (!layerId) {
-        throw new Error("No layer found");
+      if (!pmcId) {
+        throw new Error("No pmc found");
       }
 
-      const candidate = await LayerService.getById(layerId);
+      const candidate = await PmcService.getById(pmcId);
 
       if (!candidate) {
-        throw new Error("No layer found");
+        throw new Error("No pmc found");
+      }
+
+      const markerCandidate = await MarkerService.getList(pmcId, [
+        { field: "type", value: type, condition: "equals" },
+      ]);
+
+      if (markerCandidate) {
+        throw new Error("Marker already created");
       }
 
       const data = await MarkerService.create({
-        layerId,
+        pmcId,
         name,
         polygons,
+        dateTime,
         type,
       });
 
@@ -113,7 +130,7 @@ export class MarkerController {
 
       logger.info(`[Marker] Delete id=${id}`);
 
-      const data = await MarkerService.delete(id);
+      await MarkerService.delete(id);
 
       return res.status(203);
     } catch (e) {

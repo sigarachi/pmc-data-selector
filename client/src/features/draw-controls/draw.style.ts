@@ -1,57 +1,56 @@
-import styled from "@emotion/styled";
+import styled from '@emotion/styled';
 
 export const DrawControlsWrapperStyled = styled.div`
-  position: absolute;
-  height: 100%;
+	height: 100%;
 
-  right: 0px;
-  top: 0px;
+	right: 0px;
+	top: 0px;
 
-  display: flex;
-  flex-direction: column;
+	display: flex;
+	flex-direction: column;
 
-  background-color: white;
-  z-index: 100;
+	background-color: white;
+	z-index: 100;
 
-  padding: 16px;
+	padding: 16px;
 
-  align-items: center;
+	align-items: center;
 
-  gap: 8px;
+	gap: 8px;
 
-  & > * {
-    width: 100%;
-  }
+	& > * {
+		width: 100%;
+	}
 `;
 
 export const DrawItemStyled = styled.div<{ selected: boolean }>`
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  gap: 8px;
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	gap: 8px;
 
-  padding: 12px 16px;
+	padding: 12px 16px;
 
-  align-items: center;
-  justify-content: space-between;
+	align-items: center;
+	justify-content: space-between;
 
-  border: 1px solid ${({ theme }) => theme.colors.grey[200]};
+	border: 1px solid ${({ theme }) => theme.colors.grey[200]};
 
-  background-color: ${({ selected, theme }) =>
-    selected ? theme.colors.primary[300] : theme.colors.primary[100]};
+	background-color: ${({ selected, theme }) =>
+		selected ? theme.colors.primary[300] : theme.colors.primary[100]};
 
-  cursor: pointer;
+	cursor: pointer;
 
-  border-radius: 8px;
+	border-radius: 8px;
 
-  :hover {
-    background-color: ${({ theme }) => theme.colors.grey[100]};
-  }
+	:hover {
+		background-color: ${({ theme }) => theme.colors.grey[100]};
+	}
 `;
 
 export const DrawButtonsWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
 
-  gap: 8px;
+	gap: 8px;
 `;

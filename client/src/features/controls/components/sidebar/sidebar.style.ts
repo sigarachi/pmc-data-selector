@@ -4,6 +4,4 @@ export const ButtonWrapper = styled.div`
 	z-index: 100;
 `;
 
-export const TabWrapper = styled.div`
-	width: 500px;
-`;
+export const TabWrapper = styled.div``;

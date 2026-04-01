@@ -11,9 +11,10 @@ import { Loader } from '@shared/components/loader';
 import { options } from '@shared/config';
 import { useSettings } from '@shared/hooks/use-settings';
 import { useCoordsObserver } from './hooks/use-coords-observer';
+import { useDraw } from '@shared/store/draw';
 
 export const Tiles = () => {
-	const { id = '', layerId = '' } = useParams();
+	const { id = '' } = useParams();
 	const [searchParams] = useSearchParams();
 
 	const hideRadius =
@@ -21,6 +22,8 @@ export const Tiles = () => {
 		searchParams.get('showRadius') === 'false';
 
 	const { time, date, variable, pressure, vmax, vmin, type } = useSettings();
+
+	const { currentMarker } = useDraw();
 
 	const [filters] = useState<ParamFilters['filters']>([
 		{ field: 'type', condition: 'equals', value: 'coords' },
@@ -85,7 +88,7 @@ export const Tiles = () => {
 		<>
 			{isLoading && <Loader />}
 			<TileLayer url="https://{s}.tile.osm.org/{z}/{x}/{y}.png" />
-			{layerId && <Drawer />}
+			{currentMarker && <Drawer />}
 			{variable && (
 				<TileLayer
 					opacity={0.5}

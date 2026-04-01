@@ -1,9 +1,20 @@
 import { create, getList, update, getById, deleteMarker } from "@db/marker";
-import { CreateMarkerDto } from "../models/marker";
+import { CreateMarkerDto, MarkerFilters } from "../models/marker";
+import { DbFilter } from "@models/common";
 
 export class MarkerService {
-  static async getList(layerId: string) {
-    return getList(layerId);
+  static async getList(pmcId: string, filters?: MarkerFilters["filters"]) {
+    const preparedFilters: DbFilter<CreateMarkerDto> = {};
+
+    if (filters) {
+      filters.forEach((filter) => {
+        preparedFilters[filter.field] = {
+          [filter.condition]: filter.value,
+        };
+      });
+    }
+
+    return getList(pmcId, preparedFilters);
   }
 
   static async getById(id: string) {

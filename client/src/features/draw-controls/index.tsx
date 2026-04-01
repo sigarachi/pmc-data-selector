@@ -5,8 +5,8 @@ import {
 	DrawItemStyled,
 } from './draw.style';
 import { Button, Text } from '@university-ecosystem/ui-kit';
-import { FaArrowLeft, FaTrash } from 'react-icons/fa6';
-import { useNavigate, useParams } from 'react-router-dom';
+import { FaTrash } from 'react-icons/fa6';
+import { useParams } from 'react-router-dom';
 import { useCallback, useEffect } from 'react';
 import { FaDrawPolygon } from 'react-icons/fa6';
 import { FaMapMarkerAlt } from 'react-icons/fa';
@@ -14,14 +14,26 @@ import { FaSave } from 'react-icons/fa';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { MarkerService } from '@shared/api/services/marker';
 import type { CreateMarker, UpdateMarker } from '@shared/api/models/marker';
+import { useSettings } from '@shared/hooks/use-settings';
 
 export const DrawControls = () => {
-	const { id = '', layerId = '' } = useParams();
-	const navigate = useNavigate();
+	const { id = '' } = useParams();
+
+	const { date, time } = useSettings();
 
 	const { data, refetch } = useQuery({
-		queryKey: ['markers', layerId],
-		queryFn: () => MarkerService.getList(layerId),
+		queryKey: ['markers', id, date, time],
+		queryFn: () =>
+			MarkerService.getList(id, {
+				filters: [
+					{
+						field: 'dateTime',
+						value: new Date(`${date} ${time}`),
+						condition: 'equals',
+					},
+				],
+			}),
+		enabled: Boolean(date && time),
 	});
 
 	const { mutate: createMutation } = useMutation({
@@ -38,6 +50,13 @@ export const DrawControls = () => {
 		},
 	});
 
+	const { mutate: deleteMutation } = useMutation({
+		mutationFn: (itemId: string) => MarkerService.delete(itemId),
+		onSuccess: async () => {
+			await refetch();
+		},
+	});
+
 	const {
 		markers,
 		addMarker,
@@ -48,6 +67,10 @@ export const DrawControls = () => {
 		setCurrentMarker,
 	} = useDraw();
 
+	const hasPoly = Boolean(markers.find((item) => item.type === 'poly'));
+
+	const hasPoint = Boolean(markers.find((item) => item.type === 'point'));
+
 	const handleSave = useCallback(
 		(marker: StoreMarker) => {
 			const markerId = marker?.id;
@@ -56,14 +79,20 @@ export const DrawControls = () => {
 				return;
 			}
 
-			createMutation({ ...marker, layerId });
+			createMutation({ ...marker, pmcId: id });
 		},
-		[layerId, updateMutation, createMutation]
+		[id, updateMutation, createMutation]
 	);
 
-	const handleGoBack = useCallback(() => {
-		navigate(`/map/${id}` + window.location.search);
-	}, [navigate]);
+	const handleRemoveMarker = useCallback(
+		async (marker: StoreMarker, index: number) => {
+			if (marker.id) {
+				deleteMutation(marker.id);
+			}
+			removeMarker(index);
+		},
+		[deleteMutation, removeMarker]
+	);
 
 	useEffect(() => {
 		if (data?.markers) {
@@ -79,22 +108,37 @@ export const DrawControls = () => {
 
 	return (
 		<DrawControlsWrapperStyled>
-			<Button icon={<FaArrowLeft />} onClick={handleGoBack}>
-				Назад
-			</Button>
 			<DrawButtonsWrapper>
-				<Button
-					size="inherit"
-					onClick={() => addMarker({ polygons: [], type: 'poly', name: '' })}
-					icon={<FaDrawPolygon />}>
-					Добавить Полигон
-				</Button>
-				<Button
-					size="inherit"
-					onClick={() => addMarker({ polygons: [], type: 'point', name: '' })}
-					icon={<FaMapMarkerAlt />}>
-					Добавить Точку
-				</Button>
+				{!hasPoly && (
+					<Button
+						size="inherit"
+						onClick={() =>
+							addMarker({
+								polygons: [],
+								type: 'poly',
+								name: 'Полигон',
+								dateTime: new Date(`${date} ${time}`),
+							})
+						}
+						icon={<FaDrawPolygon />}>
+						Добавить Полигон
+					</Button>
+				)}
+				{!hasPoint && (
+					<Button
+						size="inherit"
+						onClick={() =>
+							addMarker({
+								polygons: [],
+								type: 'point',
+								name: 'Точка',
+								dateTime: new Date(`${date} ${time}`),
+							})
+						}
+						icon={<FaMapMarkerAlt />}>
+						Добавить Точку
+					</Button>
+				)}
 			</DrawButtonsWrapper>
 			<Text variant="body1" bold>
 				Элементы
@@ -103,7 +147,13 @@ export const DrawControls = () => {
 				<DrawItemStyled
 					selected={index === currentMarkerIdx}
 					onClick={() => setCurrentMarker(index)}>
-					{item.type}
+					<Text variant="body1">{item.name}</Text>
+					<Text variant="body2">
+						{new Date(item.dateTime).toLocaleDateString('ru-RU', {
+							hour: '2-digit',
+							minute: '2-digit',
+						})}
+					</Text>
 					<DrawButtonsWrapper>
 						<Button
 							variant="text"
@@ -116,7 +166,7 @@ export const DrawControls = () => {
 							variant="text"
 							size="inherit"
 							icon={<FaTrash />}
-							onClick={() => removeMarker(index)}
+							onClick={() => handleRemoveMarker(item, index)}
 						/>
 					</DrawButtonsWrapper>
 				</DrawItemStyled>

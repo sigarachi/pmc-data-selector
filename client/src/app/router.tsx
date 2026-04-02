@@ -7,9 +7,7 @@ export const Router = () => {
 		<BrowserRouter>
 			<Routes>
 				<Route path="/" element={<SelectPmcPage />} />
-				<Route path="map/:id" element={<MainPage />}>
-					<Route path=":markerId" element={<></>} />
-				</Route>
+				<Route path="map/:id" element={<MainPage />} />
 				<Route path="*" element={<Navigate to="/" />} />
 			</Routes>
 		</BrowserRouter>

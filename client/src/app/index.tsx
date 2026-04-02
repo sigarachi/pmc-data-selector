@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router } from './router';
 import { ThemeProvider, ecosystemTheme } from '@university-ecosystem/ui-kit';
 import type { Theme } from '@emotion/react';
+import { ToastContainer } from 'react-toastify';
 
 const client = new QueryClient({
 	defaultOptions: {
@@ -83,6 +84,18 @@ function App() {
 		<QueryClientProvider client={client}>
 			<ThemeProvider theme={theme}>
 				<Router />
+				<ToastContainer
+					position="bottom-right"
+					autoClose={5000}
+					hideProgressBar={false}
+					newestOnTop={false}
+					closeOnClick={false}
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+					theme="light"
+				/>
 			</ThemeProvider>
 		</QueryClientProvider>
 	);

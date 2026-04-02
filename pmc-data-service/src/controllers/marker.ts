@@ -77,6 +77,7 @@ export class MarkerController {
 
       const markerCandidate = await MarkerService.getList(pmcId, [
         { field: "type", value: type, condition: "equals" },
+        { field: "dateTime", value: dateTime, condition: "equals" },
       ]);
 
       if (markerCandidate.length) {

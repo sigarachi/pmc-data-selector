@@ -15,6 +15,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { MarkerService } from '@shared/api/services/marker';
 import type { CreateMarker, UpdateMarker } from '@shared/api/models/marker';
 import { useSettings } from '@shared/hooks/use-settings';
+import { toast } from 'react-toastify';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();
@@ -40,6 +41,7 @@ export const DrawControls = () => {
 		mutationFn: (values: CreateMarker) => MarkerService.create(values),
 		onSuccess: async () => {
 			await refetch();
+			toast.success('Маркер сохранен');
 		},
 	});
 
@@ -47,6 +49,7 @@ export const DrawControls = () => {
 		mutationFn: (values: UpdateMarker) => MarkerService.update(values),
 		onSuccess: async () => {
 			await refetch();
+			toast.success('Маркер сохранен');
 		},
 	});
 
@@ -54,6 +57,7 @@ export const DrawControls = () => {
 		mutationFn: (itemId: string) => MarkerService.delete(itemId),
 		onSuccess: async () => {
 			await refetch();
+			toast.success('Маркер удалён');
 		},
 	});
 

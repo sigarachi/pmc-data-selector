@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 
 export const DrawControlsWrapperStyled = styled.div`
 	height: 100%;
+	width: 100%;
 
 	right: 0px;
 	top: 0px;

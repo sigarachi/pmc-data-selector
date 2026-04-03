@@ -9,13 +9,15 @@ import { FaTrash } from 'react-icons/fa6';
 import { useParams } from 'react-router-dom';
 import { useCallback, useEffect } from 'react';
 import { FaDrawPolygon } from 'react-icons/fa6';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
 import { FaSave } from 'react-icons/fa';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { MarkerService } from '@shared/api/services/marker';
 import type { CreateMarker, UpdateMarker } from '@shared/api/models/marker';
 import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
+import { addHours } from 'date-fns';
+import { FaChevronLeft } from 'react-icons/fa';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();
@@ -88,6 +90,17 @@ export const DrawControls = () => {
 		[id, updateMutation, createMutation]
 	);
 
+	const handleCreate = useCallback(
+		(marker: StoreMarker, hours: number) => {
+			createMutation({
+				...marker,
+				pmcId: id,
+				dateTime: addHours(marker.dateTime, hours),
+			});
+		},
+		[createMutation, id]
+	);
+
 	const handleRemoveMarker = useCallback(
 		async (marker: StoreMarker, index: number) => {
 			if (marker.id) {
@@ -151,20 +164,29 @@ export const DrawControls = () => {
 				<DrawItemStyled
 					selected={index === currentMarkerIdx}
 					onClick={() => setCurrentMarker(index)}>
-					<Text variant="body1">{item.name}</Text>
-					<Text variant="body2">
-						{new Date(item.dateTime).toLocaleDateString('ru-RU', {
-							hour: '2-digit',
-							minute: '2-digit',
-						})}
-					</Text>
+					<div>
+						<Text variant="body1">{item.name}</Text>
+						<Text variant="body2">
+							{new Date(item.dateTime).toLocaleDateString('ru-RU', {
+								hour: '2-digit',
+								minute: '2-digit',
+							})}
+						</Text>
+					</div>
 					<DrawButtonsWrapper>
+						<Button
+							variant="text"
+							size="inherit"
+							onClick={() => handleCreate(item, -1)}
+							onlyIcon
+							icon={<FaChevronLeft />}></Button>
 						<Button
 							variant="text"
 							size="inherit"
 							onClick={() => handleSave(item)}
 							onlyIcon
 							icon={<FaSave />}></Button>
+
 						<Button
 							onlyIcon
 							variant="text"
@@ -172,6 +194,12 @@ export const DrawControls = () => {
 							icon={<FaTrash />}
 							onClick={() => handleRemoveMarker(item, index)}
 						/>
+						<Button
+							variant="text"
+							size="inherit"
+							onClick={() => handleCreate(item, 1)}
+							onlyIcon
+							icon={<FaChevronRight />}></Button>
 					</DrawButtonsWrapper>
 				</DrawItemStyled>
 			))}

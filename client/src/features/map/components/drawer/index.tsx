@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	Circle,
 	CircleMarker,
@@ -19,12 +19,14 @@ export const Drawer = () => {
 		index: null,
 	});
 
-	const { updatePolygons, currentMarker } = useDraw();
+	const startLatLngRef = useRef(null);
+
+	const { updatePolygons, currentMarker, cursor } = useDraw();
 
 	const map = useMapEvents({
 		//@ts-ignore
-		click: (e) => {
-			if (currentMarker) {
+		mousedown: (e) => {
+			if (currentMarker && cursor === 'create') {
 				let newPositions: Array<Array<number>> = [];
 				if (currentMarker.type === 'poly') {
 					newPositions = [...positions, [e.latlng.lat, e.latlng.lng]];
@@ -38,11 +40,33 @@ export const Drawer = () => {
 		},
 		//@ts-ignore
 		mousemove: (e) => {
-			if (dragging.active && dragging.index !== null) {
+			if (dragging.active && cursor === 'drag') {
+				if (startLatLngRef.current && !dragging.index) {
+					const start = startLatLngRef.current;
+					const current = e.latlng;
+
+					//@ts-ignore
+					const deltaLat = current.lat - start.lat;
+					//@ts-ignore
+					const deltaLng = current.lng - start.lng;
+
+					const newPositions = positions.map((value) => [
+						value[0] + deltaLat,
+						value[1] + deltaLng,
+					]);
+
+					updatePolygons(newPositions);
+					setPositions(newPositions);
+					startLatLngRef.current = current;
+					return;
+				}
+
 				const newPositions = [...positions];
-				newPositions[dragging.index] = [e.latlng.lat, e.latlng.lng];
-				updatePolygons(newPositions);
-				setPositions(newPositions);
+				if (dragging.index) {
+					newPositions[dragging.index] = [e.latlng.lat, e.latlng.lng];
+					updatePolygons(newPositions);
+					setPositions(newPositions);
+				}
 
 				map.dragging.disable();
 			}
@@ -56,7 +80,7 @@ export const Drawer = () => {
 		},
 	});
 
-	const handleMouseDown = useCallback((index: number, e: unknown) => {
+	const handleMouseDown = useCallback((e: unknown, index?: number) => {
 		//@ts-ignore
 		e.originalEvent.stopPropagation();
 		//@ts-ignore
@@ -64,7 +88,7 @@ export const Drawer = () => {
 
 		setDragging({
 			active: true,
-			index: index,
+			index: index ?? null,
 		});
 
 		map.dragging.disable();
@@ -107,23 +131,33 @@ export const Drawer = () => {
 				<>
 					{currentMarker.type === 'poly' && (
 						<>
-							<Polygon positions={positions} pathOptions={{ color: 'black' }} />
+							<Polygon
+								positions={positions}
+								pathOptions={{ color: 'black', weight: 5 }}
+								eventHandlers={{
+									//@ts-ignore
+									mousedown: (e) => {
+										handleMouseDown(e);
+										startLatLngRef.current = e.latlng;
+									},
+								}}
+							/>
 							{positions.map((pos, index) => (
-								<Circle
+								<CircleMarker
 									key={index}
-									center={pos}
-									radius={5000}
+									center={{ lat: pos[0], lng: pos[1] }}
+									radius={5}
+									pathOptions={{
+										color: 'black',
+										fillColor: 'black',
+										fillOpacity: 1,
+										weight: 2,
+									}}
 									eventHandlers={{
 										//@ts-ignore
-										mousedown: (e) => handleMouseDown(index, e),
+										mousedown: (e) => handleMouseDown(e, index),
 										click: () => setSelected(index),
-									}}>
-									<Popup>
-										Вершина {index + 1}
-										<br />
-										Координаты: {pos[0].toFixed(4)}, {pos[1].toFixed(4)}
-									</Popup>
-								</Circle>
+									}}></CircleMarker>
 							))}
 						</>
 					)}

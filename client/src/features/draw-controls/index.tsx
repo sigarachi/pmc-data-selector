@@ -18,6 +18,8 @@ import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
 import { addHours } from 'date-fns';
 import { FaChevronLeft } from 'react-icons/fa';
+import { SlCursorMove } from 'react-icons/sl';
+import { MdOutlineDraw } from 'react-icons/md';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();
@@ -71,6 +73,9 @@ export const DrawControls = () => {
 		reset,
 		currentMarkerIdx,
 		setCurrentMarker,
+		currentMarker,
+		cursor,
+		setCursor,
 	} = useDraw();
 
 	const hasPoly = Boolean(markers.find((item) => item.type === 'poly'));
@@ -114,8 +119,9 @@ export const DrawControls = () => {
 	useEffect(() => {
 		if (data?.markers) {
 			setMarkers(data.markers);
+			setCurrentMarker(0);
 		}
-	}, [data, setMarkers]);
+	}, [data, setMarkers, setCurrentMarker]);
 
 	useEffect(() => {
 		return () => {
@@ -157,6 +163,24 @@ export const DrawControls = () => {
 					</Button>
 				)}
 			</DrawButtonsWrapper>
+			{currentMarker && (
+				<DrawButtonsWrapper>
+					<Button
+						size="inherit"
+						variant={cursor === 'create' ? 'filled' : 'secondary'}
+						onClick={() => setCursor('create')}
+						icon={<MdOutlineDraw />}>
+						Создание
+					</Button>
+					<Button
+						size="inherit"
+						variant={cursor === 'drag' ? 'filled' : 'secondary'}
+						onClick={() => setCursor('drag')}
+						icon={<SlCursorMove />}>
+						Перемещение
+					</Button>
+				</DrawButtonsWrapper>
+			)}
 			<Text variant="body1" bold>
 				Элементы
 			</Text>

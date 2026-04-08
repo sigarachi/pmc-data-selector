@@ -91,7 +91,7 @@ export const Tiles = () => {
 			{currentMarker && <Drawer />}
 			{variable && (
 				<TileLayer
-					opacity={0.5}
+					opacity={0.4}
 					eventHandlers={{
 						loading: toggleOn,
 						load: toggleOff,

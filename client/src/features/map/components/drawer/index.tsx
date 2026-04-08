@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-	Circle,
-	CircleMarker,
-	Polygon,
-	Popup,
-	useMapEvents,
-} from 'react-leaflet';
+import { CircleMarker, Polygon, useMapEvents } from 'react-leaflet';
 import { useDraw } from '@shared/store/draw';
 
 export const Drawer = () => {

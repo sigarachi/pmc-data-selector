@@ -9,7 +9,5 @@ export const CoordsWrapperStyled = styled.div`
 
 	padding: 12px;
 
-	z-index: 1000;
-
 	gap: 8px;
 `;

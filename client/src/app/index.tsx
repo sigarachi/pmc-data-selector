@@ -3,6 +3,7 @@ import { Router } from './router';
 import { ThemeProvider, ecosystemTheme } from '@university-ecosystem/ui-kit';
 import type { Theme } from '@emotion/react';
 import { ToastContainer } from 'react-toastify';
+import { Reminder } from '@features/reminder';
 
 const client = new QueryClient({
 	defaultOptions: {
@@ -84,6 +85,7 @@ function App() {
 		<QueryClientProvider client={client}>
 			<ThemeProvider theme={theme}>
 				<Router />
+				<Reminder />
 				<ToastContainer
 					position="bottom-right"
 					autoClose={5000}

@@ -6,8 +6,6 @@ export const PaletteWrapperStyled = styled.div`
 	max-height: fit-content;
 	height: fit-content;
 
-	z-index: 100;
-
 	display: flex;
 	flex-direction: row;
 	align-items: center;

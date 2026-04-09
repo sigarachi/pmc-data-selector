@@ -17,7 +17,7 @@ export interface DrawStore {
 
 export interface DrawActions {
 	changeBrush: (brush: MarkerType) => void;
-	addMarker: (marker: StoreMarker) => void;
+	addMarker: (marker: StoreMarker) => StoreMarker;
 	setCurrentMarker: (index?: number) => void;
 	setCursor: (cursor: CursorType) => void;
 	updatePolygons: (polygons: Array<Array<number>>) => void;
@@ -37,8 +37,10 @@ const initialState: DrawStore = {
 export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 	...initialState,
 	changeBrush: (brush) => set(() => ({ brush })),
-	addMarker: (marker) =>
-		set((state) => ({ markers: [...state.markers, marker] })),
+	addMarker: (marker) => {
+		set((state) => ({ markers: [...state.markers, marker] }));
+		return marker;
+	},
 	setMarkers: (markers) => set(() => ({ markers })),
 	setCursor: (cursor) => set(() => ({ cursor })),
 	setCurrentMarker: (index) =>
@@ -59,7 +61,7 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 			markers.splice(index, 1);
 
 			return {
-				markers,
+				markers: state.markers.filter((_, i) => i !== index),
 			};
 		}),
 
@@ -71,13 +73,17 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 				return {};
 			}
 
-			const currentMarker = markers[Number(currentMarkerIdx)];
+			const idx = Number(currentMarkerIdx);
+			const updatedMarker = {
+				...markers[idx],
+				polygons: polygons,
+			};
 
-			currentMarker.polygons = polygons;
+			const updatedMarkers = [...markers];
+			updatedMarkers[idx] = updatedMarker;
 
-			markers[Number(currentMarkerIdx)] = currentMarker;
 			return {
-				markers,
+				markers: updatedMarkers,
 			};
 		}),
 	reset: () => set(initialState),

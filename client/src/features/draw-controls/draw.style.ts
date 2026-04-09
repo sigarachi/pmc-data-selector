@@ -11,7 +11,6 @@ export const DrawControlsWrapperStyled = styled.div`
 	flex-direction: column;
 
 	background-color: white;
-	z-index: 100;
 
 	padding: 16px;
 

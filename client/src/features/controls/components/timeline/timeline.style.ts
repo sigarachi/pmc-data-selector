@@ -6,8 +6,6 @@ export const TimelineWrapperStyled = styled.div`
 	max-height: fit-content;
 	height: fit-content;
 
-	z-index: 100;
-
 	display: flex;
 	flex-direction: column;
 

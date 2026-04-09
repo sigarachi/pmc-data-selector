@@ -13,7 +13,11 @@ import { FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
 import { FaSave } from 'react-icons/fa';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { MarkerService } from '@shared/api/services/marker';
-import type { CreateMarker, UpdateMarker } from '@shared/api/models/marker';
+import type {
+	CreateMarker,
+	MarkerType,
+	UpdateMarker,
+} from '@shared/api/models/marker';
 import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
 import { addHours } from 'date-fns';
@@ -97,6 +101,10 @@ export const DrawControls = () => {
 
 	const handleCreate = useCallback(
 		(marker: StoreMarker, hours: number) => {
+			if ((hours === -1 || hours === 1) && !marker.id) {
+				toast.error('Необходимо сохранить маркер для создания нового');
+				return;
+			}
 			createMutation({
 				...marker,
 				pmcId: id,
@@ -104,6 +112,20 @@ export const DrawControls = () => {
 			});
 		},
 		[createMutation, id]
+	);
+
+	const handleAddMarker = useCallback(
+		async (type: MarkerType, dateTime: Date) => {
+			await handleSave(
+				addMarker({
+					type,
+					polygons: [],
+					dateTime,
+					name: type === 'poly' ? 'Полигон' : 'Точка',
+				})
+			);
+		},
+		[addMarker, handleSave]
 	);
 
 	const handleRemoveMarker = useCallback(
@@ -135,14 +157,7 @@ export const DrawControls = () => {
 				{!hasPoly && (
 					<Button
 						size="inherit"
-						onClick={() =>
-							addMarker({
-								polygons: [],
-								type: 'poly',
-								name: 'Полигон',
-								dateTime: new Date(`${date} ${time}`),
-							})
-						}
+						onClick={() => handleAddMarker('poly', new Date(`${date} ${time}`))}
 						icon={<FaDrawPolygon />}>
 						Добавить Полигон
 					</Button>
@@ -151,12 +166,7 @@ export const DrawControls = () => {
 					<Button
 						size="inherit"
 						onClick={() =>
-							addMarker({
-								polygons: [],
-								type: 'point',
-								name: 'Точка',
-								dateTime: new Date(`${date} ${time}`),
-							})
+							handleAddMarker('point', new Date(`${date} ${time}`))
 						}
 						icon={<FaMapMarkerAlt />}>
 						Добавить Точку

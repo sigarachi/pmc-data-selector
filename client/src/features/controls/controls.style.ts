@@ -34,5 +34,4 @@ export const BottomWrapperStyled = styled.div`
 	padding: 12px;
 
 	gap: 8px;
-	z-index: 100;
 `;

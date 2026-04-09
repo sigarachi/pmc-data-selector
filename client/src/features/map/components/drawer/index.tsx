@@ -44,6 +44,10 @@ export const Drawer = () => {
 					//@ts-ignore
 					const deltaLng = current.lng - start.lng;
 
+					if (Math.abs(deltaLat) < 0.000001 && Math.abs(deltaLng) < 0.000001) {
+						return;
+					}
+
 					const newPositions = positions.map((value) => [
 						value[0] + deltaLat,
 						value[1] + deltaLng,

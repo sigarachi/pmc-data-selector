@@ -13,6 +13,8 @@ import { ParamService } from '@shared/api/services/param';
 import { getDaysArray } from '@shared/utils/get-dates-in-range';
 import { getNextDay, getPreviousDay } from '@shared/utils/get-previous-date';
 import { compareAsc, format } from 'date-fns';
+import { useDraw } from '@shared/store/draw';
+import { useReminder } from '@shared/store/reminder';
 
 export const Timeline: React.FC<TimeLineProps> = () => {
 	const { id = '' } = useParams();
@@ -22,6 +24,14 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 	const [selected, setSelected] = useState<string>('');
 	const [dateSelected, setDateSelected] = useState<string>('');
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	const { markers } = useDraw();
+	const { toggleOpen } = useReminder();
+
+	const hasNotSaved = useMemo(
+		() => Boolean(markers.filter((item) => !item.id).length),
+		[markers]
+	);
 
 	const { data } = useQuery({
 		queryKey: ['pmc-params', id],
@@ -153,7 +163,11 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 										: 'outlined'
 								}
 								text={format(new Date(item), 'dd.MM.yyyy')}
-								onClick={() => handleSelectDate(format(item, 'MM/dd/yyyy'))}
+								onClick={() =>
+									hasNotSaved
+										? toggleOpen(true)
+										: handleSelectDate(format(item, 'MM/dd/yyyy'))
+								}
 							/>
 						</Fragment>
 					))}
@@ -173,7 +187,9 @@ export const Timeline: React.FC<TimeLineProps> = () => {
 							variant={item === selected ? 'filled' : 'outlined'}
 							text={item}
 							color="primary"
-							onClick={() => handleSelect(item)}
+							onClick={() =>
+								hasNotSaved ? toggleOpen(true) : handleSelect(item)
+							}
 						/>
 					))}
 				</TimeWrapperStyled>

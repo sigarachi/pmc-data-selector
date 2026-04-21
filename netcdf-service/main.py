@@ -1,4 +1,4 @@
-from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap
+from helpers import tile_lonlat_grid, TILE_SIZE, get_panoply_colormap, is_tile_allowed
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -701,6 +701,11 @@ async def tile(variable: str, time: str, z: int, x: int, y: int, pressure_level:
                u_vmax: Optional[float] = None):
     logger.info(
         f"[Tile]: variable={variable}, time={time}, pressure_level={pressure_level}, type={type}")
+
+    if (is_tile_allowed(z, x, y) == False):
+        return Response(
+
+        )
 
     time = pd.to_datetime(time, format='%m/%d/%Y %H:%M')
 

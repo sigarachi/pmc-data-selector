@@ -3,11 +3,20 @@ import mercantile
 
 TILE_SIZE = 256
 
+MIN_LON = -10
+MAX_LON = 200
+
 
 def tile_bounds(z: int, x: int, y: int):
     """Return lon/lat bounds of tile"""
     b = mercantile.bounds(x, y, z)
     return b.west, b.south, b.east, b.north
+
+
+def is_tile_allowed(z: int, x: int, y: int) -> bool:
+    west, south, east, north = tile_bounds(z, x, y)
+
+    return not (west < MIN_LON or east > MAX_LON)
 
 
 def tile_lonlat_grid(z, x, y):

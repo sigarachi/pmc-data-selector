@@ -108,6 +108,7 @@ export const Tiles = () => {
 						{item.value && (
 							<CircleMarker
 								key={item.id}
+								//@ts-ignore
 								center={item.value.trim().split(',').reverse()}
 								pathOptions={{
 									fillColor: item.name === 'formation_coords' ? 'red' : 'black',
@@ -119,6 +120,7 @@ export const Tiles = () => {
 
 						{!hideRadius && radius && (
 							<Circle
+								//@ts-ignore
 								center={item.value.trim().split(',').reverse()}
 								radius={Number(radius.value) * 1000}
 								pathOptions={{

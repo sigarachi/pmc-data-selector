@@ -74,9 +74,10 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 			}
 
 			const idx = Number(currentMarkerIdx);
+
 			const updatedMarker = {
 				...markers[idx],
-				polygons: polygons,
+				polygons,
 			};
 
 			const updatedMarkers = [...markers];
@@ -84,6 +85,7 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 
 			return {
 				markers: updatedMarkers,
+				currentMarker: updatedMarker,
 			};
 		}),
 	reset: () => set(initialState),

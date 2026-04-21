@@ -133,7 +133,7 @@ export class MarkerController {
 
       await MarkerService.delete(id);
 
-      return res.status(203);
+      return res.status(200).json({});
     } catch (e) {
       logger.error(e);
       next(e);

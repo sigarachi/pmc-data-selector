@@ -1,171 +1,154 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CircleMarker, Polygon, useMapEvents } from 'react-leaflet';
+import { CircleMarker, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import { useDraw } from '@shared/store/draw';
 
 export const Drawer = () => {
-	const [positions, setPositions] = useState<Array<Array<number>>>([]);
-	const [selected, setSelected] = useState<number | null>(null);
-	const [dragging, setDragging] = useState<{
-		active: boolean;
-		index: number | null;
-	}>({
+	const { currentMarker, updatePolygons } = useDraw();
+
+	const [positions, setPositions] = useState<number[][]>([]);
+
+	const positionsRef = useRef<number[][]>([]);
+	const draggingRef = useRef<{ active: boolean; index: number | null }>({
 		active: false,
 		index: null,
 	});
+	const isDraggingRef = useRef(false);
+	const startRef = useRef<{ lat: number; lng: number } | null>(null);
 
-	const startLatLngRef = useRef(null);
-
-	const { updatePolygons, currentMarker, cursor } = useDraw();
-
-	const map = useMapEvents({
-		//@ts-ignore
-		mousedown: (e) => {
-			if (currentMarker && cursor === 'create') {
-				let newPositions: Array<Array<number>> = [];
-				if (currentMarker.type === 'poly') {
-					newPositions = [...positions, [e.latlng.lat, e.latlng.lng]];
-				}
-				if (currentMarker.type === 'point') {
-					newPositions = [[e.latlng.lat, e.latlng.lng]];
-				}
-				updatePolygons(newPositions);
-				setPositions(newPositions);
-			}
-		},
-		//@ts-ignore
-		mousemove: (e) => {
-			if (dragging.active && cursor === 'drag') {
-				if (startLatLngRef.current && !dragging.index) {
-					const start = startLatLngRef.current;
-					const current = e.latlng;
-
-					//@ts-ignore
-					const deltaLat = current.lat - start.lat;
-					//@ts-ignore
-					const deltaLng = current.lng - start.lng;
-
-					if (Math.abs(deltaLat) < 0.000001 && Math.abs(deltaLng) < 0.000001) {
-						return;
-					}
-
-					const newPositions = positions.map((value) => [
-						value[0] + deltaLat,
-						value[1] + deltaLng,
-					]);
-
-					updatePolygons(newPositions);
-					setPositions(newPositions);
-					startLatLngRef.current = current;
-					return;
-				}
-
-				const newPositions = [...positions];
-				if (dragging.index) {
-					newPositions[dragging.index] = [e.latlng.lat, e.latlng.lng];
-					updatePolygons(newPositions);
-					setPositions(newPositions);
-				}
-
-				map.dragging.disable();
-			}
-		},
-		mouseup: () => {
-			if (dragging.active) {
-				setDragging({ active: false, index: null });
-
-				map.dragging.enable();
-			}
-		},
-	});
-
-	const handleMouseDown = useCallback((e: unknown, index?: number) => {
-		//@ts-ignore
-		e.originalEvent.stopPropagation();
-		//@ts-ignore
-		e.originalEvent.preventDefault();
-
-		setDragging({
-			active: true,
-			index: index ?? null,
-		});
-
-		map.dragging.disable();
-	}, []);
-
-	const handleDelete = useCallback(
-		(event: KeyboardEvent) => {
-			const key = event.key;
-
-			if (key === 'Delete' && selected) {
-				const newPositions = [...positions];
-				newPositions.splice(selected, 1);
-				updatePolygons(newPositions);
-				setPositions(newPositions);
-				setSelected(null);
-			}
-		},
-		[positions, selected, updatePolygons]
-	);
+	const map = useMap();
 
 	useEffect(() => {
-		if (currentMarker) {
+		if (currentMarker?.polygons) {
 			setPositions(currentMarker.polygons);
+			positionsRef.current = currentMarker.polygons;
 		} else {
 			setPositions([]);
+			positionsRef.current = [];
 		}
 	}, [currentMarker]);
 
-	useEffect(() => {
-		window.addEventListener('keydown', handleDelete);
+	useMapEvents({
+		click(e) {
+			if (isDraggingRef.current) return;
 
-		return () => {
-			window.removeEventListener('keydown', handleDelete);
-		};
-	}, [handleDelete]);
+			if (!currentMarker) return;
+
+			const newPoint = [e.latlng.lat, e.latlng.lng];
+
+			let newPositions: number[][] = [];
+
+			if (currentMarker.type === 'poly') {
+				newPositions = [...positionsRef.current, newPoint];
+			}
+
+			if (currentMarker.type === 'point') {
+				newPositions = [newPoint];
+			}
+
+			positionsRef.current = newPositions;
+			setPositions(newPositions);
+			updatePolygons(newPositions);
+		},
+
+		mousemove(e) {
+			if (!draggingRef.current.active) return;
+
+			isDraggingRef.current = true;
+
+			const { index } = draggingRef.current;
+
+			if (index === null && startRef.current) {
+				const deltaLat = e.latlng.lat - startRef.current.lat;
+				const deltaLng = e.latlng.lng - startRef.current.lng;
+
+				const newPositions = positionsRef.current.map(([lat, lng]) => [
+					lat + deltaLat,
+					lng + deltaLng,
+				]);
+
+				positionsRef.current = newPositions;
+				startRef.current = e.latlng;
+
+				setPositions(newPositions);
+				return;
+			}
+
+			if (index !== null) {
+				const newPositions = [...positionsRef.current];
+				newPositions[index] = [e.latlng.lat, e.latlng.lng];
+
+				positionsRef.current = newPositions;
+
+				setPositions(newPositions);
+			}
+		},
+
+		mouseup() {
+			if (!draggingRef.current.active) return;
+
+			draggingRef.current = { active: false, index: null };
+
+			map.dragging.enable();
+
+			updatePolygons(positionsRef.current);
+
+			setTimeout(() => {
+				isDraggingRef.current = false;
+			}, 50);
+		},
+	});
+
+	const handleMouseDown = useCallback(
+		(e: any, index: number | null = null) => {
+			e.originalEvent.stopPropagation();
+
+			draggingRef.current = { active: true, index };
+			isDraggingRef.current = false;
+			startRef.current = e.latlng;
+			map.dragging.disable();
+		},
+		[draggingRef, isDraggingRef, startRef, map]
+	);
 
 	return (
 		<>
-			{currentMarker && (
+			{currentMarker?.type === 'poly' && (
 				<>
-					{currentMarker.type === 'poly' && (
-						<>
-							<Polygon
-								positions={positions}
-								pathOptions={{ color: 'black', weight: 5 }}
-								eventHandlers={{
-									//@ts-ignore
-									mousedown: (e) => {
-										handleMouseDown(e);
-										startLatLngRef.current = e.latlng;
-									},
-								}}
-							/>
-							{positions.map((pos, index) => (
-								<CircleMarker
-									key={index}
-									center={{ lat: pos[0], lng: pos[1] }}
-									radius={5}
-									pathOptions={{
-										color: 'black',
-										fillColor: 'black',
-										fillOpacity: 1,
-										weight: 2,
-									}}
-									eventHandlers={{
-										//@ts-ignore
-										mousedown: (e) => handleMouseDown(e, index),
-										click: () => setSelected(index),
-									}}></CircleMarker>
-							))}
-						</>
-					)}
-					{currentMarker.type === 'point' && positions.length && (
+					<Polygon
+						//@ts-ignore
+						positions={positions}
+						pathOptions={{ color: 'black' }}
+						eventHandlers={{
+							mousedown: (e) => handleMouseDown(e, null),
+							click: (e) => e.originalEvent.stopPropagation(),
+						}}
+					/>
+
+					{positions.map((pos, i) => (
 						<CircleMarker
-							center={positions[0]}
-							pathOptions={{ color: 'green' }}
+							key={i}
+							center={{ lat: pos[0], lng: pos[1] }}
+							radius={6}
+							pathOptions={{ color: 'black', fillColor: 'black' }}
+							eventHandlers={{
+								mousedown: (e) => handleMouseDown(e, i),
+								click: (e) => e.originalEvent.stopPropagation(),
+							}}
 						/>
-					)}
+					))}
 				</>
+			)}
+
+			{currentMarker?.type === 'point' && positions.length && (
+				<CircleMarker
+					//@ts-ignore
+					center={positions[0]}
+					pathOptions={{ color: 'green' }}
+					eventHandlers={{
+						mousedown: (e) => handleMouseDown(e, null),
+						click: (e) => e.originalEvent.stopPropagation(),
+					}}
+				/>
 			)}
 		</>
 	);

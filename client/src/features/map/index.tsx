@@ -14,8 +14,9 @@ export const MyMap = (): React.ReactElement => {
 				zoom={3}
 				minZoom={1}
 				maxZoom={13}
-				style={{ height: '100%', width: '100%', zIndex: '1' }}
-				key={new Date().getTime()}>
+				doubleClickZoom={false}
+				boxZoom={false}
+				style={{ height: '100%', width: '100%', zIndex: '1' }}>
 				<Tiles />
 			</MapContainer>
 		</MapWrapper>

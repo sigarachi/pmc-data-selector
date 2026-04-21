@@ -111,8 +111,9 @@ export const Tiles = () => {
 								//@ts-ignore
 								center={item.value.trim().split(',').reverse()}
 								pathOptions={{
-									fillColor: item.name === 'formation_coords' ? 'red' : 'black',
-									color: item.name === 'formation_coords' ? 'red' : 'black',
+									fillColor:
+										item.name === 'formation_coords' ? 'red' : 'purple',
+									color: item.name === 'formation_coords' ? 'red' : 'purple',
 								}}>
 								<Popup>{item.title}</Popup>
 							</CircleMarker>
@@ -124,8 +125,9 @@ export const Tiles = () => {
 								center={item.value.trim().split(',').reverse()}
 								radius={Number(radius.value) * 1000}
 								pathOptions={{
-									fillColor: item.name === 'formation_coords' ? 'red' : 'black',
-									color: item.name === 'formation_coords' ? 'red' : 'black',
+									fillColor:
+										item.name === 'formation_coords' ? 'red' : 'purple',
+									color: item.name === 'formation_coords' ? 'red' : 'purple',
 								}}
 							/>
 						)}

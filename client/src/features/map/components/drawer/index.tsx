@@ -112,43 +112,53 @@ export const Drawer = () => {
 
 	return (
 		<>
-			{currentMarker?.type === 'poly' && (
+			{currentMarker && (
 				<>
-					<Polygon
-						//@ts-ignore
-						positions={positions}
-						pathOptions={{ color: 'black' }}
-						eventHandlers={{
-							mousedown: (e) => handleMouseDown(e, null),
-							click: (e) => e.originalEvent.stopPropagation(),
-						}}
-					/>
+					{currentMarker?.type === 'poly' && (
+						<>
+							{positions.length && (
+								<Polygon
+									//@ts-ignore
+									positions={positions}
+									pathOptions={{ color: 'black', weight: 5 }}
+									eventHandlers={{
+										mousedown: (e) => handleMouseDown(e, null),
+										click: (e) => e.originalEvent.stopPropagation(),
+									}}
+								/>
+							)}
+							{positions.map((pos, i) => (
+								<CircleMarker
+									key={i}
+									center={{ lat: pos[0], lng: pos[1] }}
+									radius={6}
+									pathOptions={{
+										color: 'black',
+										fillColor: 'black',
+										fillOpacity: 1,
+										weight: 2,
+									}}
+									eventHandlers={{
+										mousedown: (e) => handleMouseDown(e, i),
+										click: (e) => e.originalEvent.stopPropagation(),
+									}}
+								/>
+							))}
+						</>
+					)}
 
-					{positions.map((pos, i) => (
+					{currentMarker?.type === 'point' && positions.length && (
 						<CircleMarker
-							key={i}
-							center={{ lat: pos[0], lng: pos[1] }}
-							radius={6}
-							pathOptions={{ color: 'black', fillColor: 'black' }}
+							//@ts-ignore
+							center={positions[0]}
+							pathOptions={{ color: 'green' }}
 							eventHandlers={{
-								mousedown: (e) => handleMouseDown(e, i),
+								mousedown: (e) => handleMouseDown(e, null),
 								click: (e) => e.originalEvent.stopPropagation(),
 							}}
 						/>
-					))}
+					)}
 				</>
-			)}
-
-			{currentMarker?.type === 'point' && positions.length && (
-				<CircleMarker
-					//@ts-ignore
-					center={positions[0]}
-					pathOptions={{ color: 'green' }}
-					eventHandlers={{
-						mousedown: (e) => handleMouseDown(e, null),
-						click: (e) => e.originalEvent.stopPropagation(),
-					}}
-				/>
 			)}
 		</>
 	);

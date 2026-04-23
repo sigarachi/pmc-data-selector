@@ -34,17 +34,20 @@ export const DrawItemStyled = styled.div<{ selected: boolean }>`
 	align-items: center;
 	justify-content: space-between;
 
-	border: 1px solid ${({ theme }) => theme.colors.grey[200]};
+	border: 3px solid
+		${({ theme, selected }) =>
+			selected ? theme.colors.primary[500] : theme.colors.grey[200]};
 
 	background-color: ${({ selected, theme }) =>
-		selected ? theme.colors.primary[300] : theme.colors.primary[100]};
+		selected ? theme.colors.primary[300] : theme.colors.primary[200]};
 
 	cursor: pointer;
 
 	border-radius: 8px;
 
 	:hover {
-		background-color: ${({ theme }) => theme.colors.grey[100]};
+		background-color: ${({ theme, selected }) =>
+			selected ? theme.colors.primary[400] : theme.colors.secondary[300]};
 	}
 `;
 

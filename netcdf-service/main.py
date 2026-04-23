@@ -650,8 +650,39 @@ def make_no_data_tile(text: str = "Нет данных") -> bytes:
     return buf.getvalue()
 
 
+def draw_arrow_polygon(draw, x, y, u, v, length, width, head_len, head_width, color):
+    angle = np.arctan2(-v, u)
+
+    cos_a = np.cos(angle)
+    sin_a = np.sin(angle)
+
+    x_end = x + cos_a * length
+    y_end = y + sin_a * length
+
+    x_body = x + cos_a * (length - head_len)
+    y_body = y + sin_a * (length - head_len)
+
+    px = -sin_a
+    py = cos_a
+
+    p1 = (x + px * width/2, y + py * width/2)
+    p2 = (x - px * width/2, y - py * width/2)
+    p3 = (x_body - px * width/2, y_body - py * width/2)
+    p4 = (x_body + px * width/2, y_body + py * width/2)
+
+    tip = (x_end, y_end)
+    left = (x_body + px * head_width/2, y_body + py * head_width/2)
+    right = (x_body - px * head_width/2, y_body - py * head_width/2)
+
+    polygon = [p1, p2, p3, right, tip, left, p4]
+
+    draw.polygon(polygon, fill=color)
+
+
 def draw_wind_arrows(img, u, v, step=32, scale=2.5, fixed_length=10):
-    draw = ImageDraw.Draw(img)
+    upscale = 2
+    big = img.resize((img.width*upscale, img.height*upscale), Image.NEAREST)
+    draw = ImageDraw.Draw(big)
 
     h, w = u.shape
 
@@ -663,37 +694,25 @@ def draw_wind_arrows(img, u, v, step=32, scale=2.5, fixed_length=10):
             if np.isnan(uu) or np.isnan(vv):
                 continue
 
-            x0 = i
-            y0 = j
-
             speed = np.sqrt(uu**2 + vv**2)
-
-            if speed > 0:
-                u_norm = uu / speed
-                v_norm = vv / speed
-
-                x1 = x0 + u_norm * fixed_length
-                y1 = y0 - v_norm * fixed_length
-            else:
+            if speed < 0.1:
                 continue
 
-            draw.line((x0, y0, x1, y1), fill=(0, 0, 0, 255), width=2)
+            x = i * upscale
+            y = j * upscale
 
-            angle = np.arctan2(-(y1 - y0), x1 - x0)
-
-            arrow_len = 5
-            left = (
-                x1 - arrow_len*np.cos(angle - np.pi/6),
-                y1 + arrow_len*np.sin(angle - np.pi/6)
+            draw_arrow_polygon(
+                draw,
+                x, y,
+                uu, vv,
+                length=20.0,
+                width=3.0,
+                head_len=12.0,
+                head_width=12.0,
+                color="#000000"
             )
-            right = (
-                x1 - arrow_len*np.cos(angle + np.pi/6),
-                y1 + arrow_len*np.sin(angle + np.pi/6)
-            )
 
-            draw.polygon([(x1, y1), left, right], fill=(0, 0, 0, 255))
-
-    return img
+    return big.resize(img.size, Image.LANCZOS)
 
 
 @app.get("/tile/{z}/{x}/{y}")

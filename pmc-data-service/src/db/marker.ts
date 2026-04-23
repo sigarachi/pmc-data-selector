@@ -11,6 +11,9 @@ export const getList = async (
       pmcId,
       ...filters,
     },
+    orderBy: {
+      type: "asc",
+    },
   });
 
 export const getById = async (id: string) =>

@@ -6,7 +6,7 @@ import {
 } from './draw.style';
 import { Button, Text } from '@university-ecosystem/ui-kit';
 import { FaTrash } from 'react-icons/fa6';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect } from 'react';
 import { FaDrawPolygon } from 'react-icons/fa6';
 import { FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
@@ -20,11 +20,12 @@ import type {
 } from '@shared/api/models/marker';
 import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
-import { addHours } from 'date-fns';
+import { addHours, formatDate, getTime } from 'date-fns';
 import { FaChevronLeft } from 'react-icons/fa';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const { date, time } = useSettings();
 
@@ -47,7 +48,7 @@ export const DrawControls = () => {
 		mutationFn: (values: CreateMarker) => MarkerService.create(values),
 		onSuccess: async () => {
 			await refetch();
-			toast.success('Маркер сохранен');
+			toast.success('Маркер создан');
 		},
 	});
 
@@ -75,6 +76,7 @@ export const DrawControls = () => {
 		reset,
 		currentMarkerIdx,
 		setCurrentMarker,
+		currentMarker,
 	} = useDraw();
 
 	const hasPoly = Boolean(markers.find((item) => item.type === 'poly'));
@@ -105,8 +107,15 @@ export const DrawControls = () => {
 				pmcId: id,
 				dateTime: addHours(marker.dateTime, hours),
 			});
+
+			const time = formatDate(addHours(marker.dateTime, hours), 'H:mm');
+			const date = formatDate(addHours(marker.dateTime, hours), 'MM/dd/yyyy');
+
+			searchParams.set('time', time);
+			searchParams.set('date', date);
+			setSearchParams(searchParams);
 		},
-		[createMutation, id]
+		[createMutation, id, searchParams, setSearchParams]
 	);
 
 	const handleAddMarker = useCallback(
@@ -136,6 +145,8 @@ export const DrawControls = () => {
 	useEffect(() => {
 		if (data?.markers) {
 			setMarkers(data.markers);
+		}
+		if (!currentMarker) {
 			setCurrentMarker(0);
 		}
 	}, [data, setMarkers, setCurrentMarker]);
@@ -185,12 +196,14 @@ export const DrawControls = () => {
 						</Text>
 					</div>
 					<DrawButtonsWrapper>
-						<Button
-							variant="text"
-							size="inherit"
-							onClick={() => handleCreate(item, -1)}
-							onlyIcon
-							icon={<FaChevronLeft />}></Button>
+						{item.type === 'poly' && (
+							<Button
+								variant="text"
+								size="inherit"
+								onClick={() => handleCreate(item, -1)}
+								onlyIcon
+								icon={<FaChevronLeft />}></Button>
+						)}
 						<Button
 							variant="text"
 							size="inherit"
@@ -205,12 +218,14 @@ export const DrawControls = () => {
 							icon={<FaTrash />}
 							onClick={() => handleRemoveMarker(item, index)}
 						/>
-						<Button
-							variant="text"
-							size="inherit"
-							onClick={() => handleCreate(item, 1)}
-							onlyIcon
-							icon={<FaChevronRight />}></Button>
+						{item.type === 'poly' && (
+							<Button
+								variant="text"
+								size="inherit"
+								onClick={() => handleCreate(item, 1)}
+								onlyIcon
+								icon={<FaChevronRight />}></Button>
+						)}
 					</DrawButtonsWrapper>
 				</DrawItemStyled>
 			))}

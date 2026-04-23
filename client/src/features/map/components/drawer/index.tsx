@@ -110,6 +110,16 @@ export const Drawer = () => {
 		[draggingRef, isDraggingRef, startRef, map]
 	);
 
+	const handlePointContext = useCallback(
+		(i: number) => {
+			const newPositions = [...positionsRef.current];
+			newPositions.splice(i, 1);
+			setPositions(newPositions);
+			updatePolygons(newPositions);
+		},
+		[positionsRef, updatePolygons]
+	);
+
 	return (
 		<>
 			{currentMarker && (
@@ -141,6 +151,7 @@ export const Drawer = () => {
 									eventHandlers={{
 										mousedown: (e) => handleMouseDown(e, i),
 										click: (e) => e.originalEvent.stopPropagation(),
+										contextmenu: () => handlePointContext(i),
 									}}
 								/>
 							))}

@@ -20,7 +20,7 @@ import type {
 } from '@shared/api/models/marker';
 import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
-import { addHours, formatDate, getTime } from 'date-fns';
+import { addHours, formatDate } from 'date-fns';
 import { FaChevronLeft } from 'react-icons/fa';
 
 export const DrawControls = () => {

@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CircleMarker, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import { useDraw } from '@shared/store/draw';
 
 export const Drawer = () => {
-	const { currentMarker, updatePolygons } = useDraw();
+	const { currentMarker, updatePolygons, markers } = useDraw();
 
 	const [positions, setPositions] = useState<number[][]>([]);
 
@@ -14,6 +14,11 @@ export const Drawer = () => {
 	});
 	const isDraggingRef = useRef(false);
 	const startRef = useRef<{ lat: number; lng: number } | null>(null);
+
+	const otherMarkers = useMemo(
+		() => markers.filter((item) => item?.id !== currentMarker?.id),
+		[markers, currentMarker]
+	);
 
 	const map = useMap();
 
@@ -122,6 +127,43 @@ export const Drawer = () => {
 
 	return (
 		<>
+			{otherMarkers.length &&
+				otherMarkers.map((marker) => (
+					<>
+						{marker.type === 'point' && marker.polygons.length && (
+							<CircleMarker
+								//@ts-ignore
+								center={marker.polygons[0]}
+								pathOptions={{ color: 'yellow' }}
+							/>
+						)}
+						{marker.type === 'poly' && (
+							<>
+								{marker.polygons.length && (
+									<Polygon
+										//@ts-ignore
+										positions={marker.polygons}
+										pathOptions={{ color: 'yellow', weight: 5 }}
+									/>
+								)}
+
+								{marker.polygons.map((pos, i) => (
+									<CircleMarker
+										key={i}
+										center={{ lat: pos[0], lng: pos[1] }}
+										radius={6}
+										pathOptions={{
+											color: 'yellow',
+											fillColor: 'yellow',
+											fillOpacity: 1,
+											weight: 2,
+										}}
+									/>
+								))}
+							</>
+						)}
+					</>
+				))}
 			{currentMarker && (
 				<>
 					{currentMarker?.type === 'poly' && (

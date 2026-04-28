@@ -146,7 +146,10 @@ export const DrawControls = () => {
 		if (data?.markers && data?.markers.length) {
 			setMarkers(data.markers);
 		}
-		if (!currentMarker) {
+		if (
+			!currentMarker ||
+			!data?.markers.find((item) => item.id === currentMarker.id)
+		) {
 			setCurrentMarker(0);
 		}
 

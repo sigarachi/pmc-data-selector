@@ -11,7 +11,7 @@ import { useCallback, useEffect } from 'react';
 import { FaDrawPolygon } from 'react-icons/fa6';
 import { FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
 import { FaSave } from 'react-icons/fa';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MarkerService } from '@shared/api/services/marker';
 import type {
 	CreateMarker,
@@ -26,6 +26,8 @@ import { FaChevronLeft } from 'react-icons/fa';
 export const DrawControls = () => {
 	const { id = '' } = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	const queryClient = useQueryClient();
 
 	const { date, time } = useSettings();
 
@@ -47,7 +49,10 @@ export const DrawControls = () => {
 	const { mutate: createMutation } = useMutation({
 		mutationFn: (values: CreateMarker) => MarkerService.create(values),
 		onSuccess: async () => {
-			await refetch();
+			await Promise.allSettled([
+				await refetch(),
+				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+			]);
 			toast.success('Маркер создан');
 		},
 	});
@@ -64,7 +69,10 @@ export const DrawControls = () => {
 		mutationFn: (itemId: string) => MarkerService.delete(itemId),
 		onSuccess: async () => {
 			reset();
-			await refetch();
+			await Promise.allSettled([
+				await refetch(),
+				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+			]);
 			toast.success('Маркер удалён');
 		},
 	});

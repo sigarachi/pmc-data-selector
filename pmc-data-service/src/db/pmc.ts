@@ -1,5 +1,6 @@
 import prisma from "@config/db";
 import { DbFilter } from "@models/common";
+import { UpdatePmcDto } from "@models/pmc";
 
 export const getList = async (
   take: number,
@@ -39,3 +40,6 @@ export const create = async (name: string) =>
       name,
     },
   });
+
+export const update = async (id: string, values: UpdatePmcDto) =>
+  prisma.pMC.update({ where: { id }, data: values });

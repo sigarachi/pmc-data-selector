@@ -5,3 +5,8 @@ export type CreatePmcDto = {
 };
 
 export type PmcFilters = FilteredRequest<CreatePmcDto, "name">;
+
+export type UpdatePmcDto = {
+  name?: string;
+  hasTracks?: boolean;
+};

@@ -92,6 +92,8 @@ export class MarkerController {
         type,
       });
 
+      await PmcService.update(pmcId, { hasTracks: true });
+
       return res.status(201).json({ marker: data });
     } catch (e) {
       logger.error(e);
@@ -131,7 +133,13 @@ export class MarkerController {
 
       logger.info(`[Marker] Delete id=${id}`);
 
-      await MarkerService.delete(id);
+      const data = await MarkerService.delete(id);
+
+      const markers = await MarkerService.getList(data.pmcId);
+
+      if (!markers.length) {
+        await PmcService.update(data.pmcId, { hasTracks: false });
+      }
 
       return res.status(200).json({});
     } catch (e) {

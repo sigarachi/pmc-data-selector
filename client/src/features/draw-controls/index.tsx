@@ -63,6 +63,7 @@ export const DrawControls = () => {
 	const { mutate: deleteMutation } = useMutation({
 		mutationFn: (itemId: string) => MarkerService.delete(itemId),
 		onSuccess: async () => {
+			reset();
 			await refetch();
 			toast.success('Маркер удалён');
 		},
@@ -143,7 +144,7 @@ export const DrawControls = () => {
 	);
 
 	useEffect(() => {
-		if (data?.markers && data?.markers.length) {
+		if (!isLoading && data?.markers && data?.markers.length) {
 			setMarkers(data.markers);
 		}
 		if (
@@ -156,7 +157,7 @@ export const DrawControls = () => {
 		if (data?.markers && !data?.markers.length && !isLoading) {
 			reset();
 		}
-	}, [data, setMarkers, setCurrentMarker, reset, isLoading]);
+	}, [data, setMarkers, setCurrentMarker, reset, isLoading, currentMarker]);
 
 	useEffect(() => {
 		return () => {

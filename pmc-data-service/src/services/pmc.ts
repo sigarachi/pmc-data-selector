@@ -1,5 +1,5 @@
-import { getById, getList, create, getByName, getCount } from "@db/pmc";
-import { CreatePmcDto, PmcFilters } from "../models/pmc";
+import { getById, getList, create, getByName, getCount, update } from "@db/pmc";
+import { CreatePmcDto, PmcFilters, UpdatePmcDto } from "../models/pmc";
 import { DbFilter } from "../models/common";
 
 export class PmcService {
@@ -31,5 +31,9 @@ export class PmcService {
 
   static async create(name: string) {
     return create(name);
+  }
+
+  static async update(id: string, values: UpdatePmcDto) {
+    return update(id, values);
   }
 }

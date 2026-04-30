@@ -31,7 +31,7 @@ export const DrawControls = () => {
 
 	const { date, time } = useSettings();
 
-	const { data, refetch, isLoading } = useQuery({
+	const { data, refetch, isLoading, isSuccess } = useQuery({
 		queryKey: ['markers', id, date, time],
 		queryFn: () =>
 			MarkerService.getList(id, {
@@ -152,9 +152,12 @@ export const DrawControls = () => {
 	);
 
 	useEffect(() => {
-		if (!isLoading && data?.markers && data?.markers.length) {
+		if (data) {
 			setMarkers(data.markers);
 		}
+	}, [data]);
+
+	useEffect(() => {
 		if (
 			!currentMarker ||
 			!data?.markers.find((item) => item.id === currentMarker.id)
@@ -165,7 +168,15 @@ export const DrawControls = () => {
 		if (data?.markers && !data?.markers.length && !isLoading) {
 			reset();
 		}
-	}, [data, setMarkers, setCurrentMarker, reset, isLoading, currentMarker]);
+	}, [
+		data,
+		setMarkers,
+		setCurrentMarker,
+		reset,
+		isLoading,
+		currentMarker,
+		markers,
+	]);
 
 	useEffect(() => {
 		return () => {

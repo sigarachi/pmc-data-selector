@@ -68,7 +68,6 @@ export const DrawControls = () => {
 	const { mutate: deleteMutation } = useMutation({
 		mutationFn: (itemId: string) => MarkerService.delete(itemId),
 		onSuccess: async () => {
-			reset();
 			await Promise.allSettled([
 				await refetch(),
 				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
@@ -220,6 +219,10 @@ export const DrawControls = () => {
 								hour: '2-digit',
 								minute: '2-digit',
 							})}
+						</Text>
+						<br />
+						<Text variant="body2">
+							Наличие разметки: {item.polygons.length ? 'есть' : 'нет'}
 						</Text>
 					</div>
 					<DrawButtonsWrapper>

@@ -83,15 +83,10 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 			const updatedMarkers = [...markers];
 			updatedMarkers[idx] = updatedMarker;
 
-			console.log(updatedMarker, updatedMarkers);
-
 			return {
 				markers: updatedMarkers,
 				currentMarker: updatedMarker,
 			};
 		}),
-	reset: () => {
-		console.log('reset');
-		set(initialState);
-	},
+	reset: () => set(initialState),
 }));

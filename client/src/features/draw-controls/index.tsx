@@ -31,7 +31,7 @@ export const DrawControls = () => {
 
 	const { date, time } = useSettings();
 
-	const { data, refetch, isLoading, isSuccess } = useQuery({
+	const { data, refetch, isLoading } = useQuery({
 		queryKey: ['markers', id, date, time],
 		queryFn: () =>
 			MarkerService.getList(id, {

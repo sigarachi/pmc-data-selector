@@ -156,7 +156,7 @@ export const DrawControls = () => {
 		if (data) {
 			setMarkers(data.markers);
 		}
-	}, [data?.markers.length]);
+	}, [data, data?.markers.length]);
 
 	useEffect(() => {
 		if (
@@ -184,8 +184,6 @@ export const DrawControls = () => {
 			reset();
 		};
 	}, [reset]);
-
-	if (isLoading) return <Loader></Loader>;
 
 	return (
 		<DrawControlsWrapperStyled>

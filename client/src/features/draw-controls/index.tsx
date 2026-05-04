@@ -22,7 +22,6 @@ import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
 import { addHours, formatDate } from 'date-fns';
 import { FaChevronLeft } from 'react-icons/fa';
-import { Loader } from '@shared/components/loader';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();

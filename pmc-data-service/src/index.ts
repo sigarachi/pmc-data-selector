@@ -26,7 +26,7 @@ app.use(helmet());
 app.use(
   helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }),
 );
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+// app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({

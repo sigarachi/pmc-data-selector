@@ -22,6 +22,7 @@ import { useSettings } from '@shared/hooks/use-settings';
 import { toast } from 'react-toastify';
 import { addHours, formatDate } from 'date-fns';
 import { FaChevronLeft } from 'react-icons/fa';
+import { Loader } from '@shared/components/loader';
 
 export const DrawControls = () => {
 	const { id = '' } = useParams();
@@ -68,6 +69,7 @@ export const DrawControls = () => {
 	const { mutate: deleteMutation } = useMutation({
 		mutationFn: (itemId: string) => MarkerService.delete(itemId),
 		onSuccess: async () => {
+			// reset();
 			await Promise.allSettled([
 				await refetch(),
 				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
@@ -154,7 +156,7 @@ export const DrawControls = () => {
 		if (data) {
 			setMarkers(data.markers);
 		}
-	}, [data]);
+	}, [data?.markers.length]);
 
 	useEffect(() => {
 		if (
@@ -182,6 +184,8 @@ export const DrawControls = () => {
 			reset();
 		};
 	}, [reset]);
+
+	if (isLoading) return <Loader></Loader>;
 
 	return (
 		<DrawControlsWrapperStyled>

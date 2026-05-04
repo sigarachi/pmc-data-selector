@@ -61,7 +61,7 @@ export const useDraw = create<DrawStore & DrawActions>()((set) => ({
 			markers.splice(index, 1);
 
 			return {
-				markers: state.markers.filter((_, i) => i !== index),
+				markers: markers.filter((_, i) => i !== index),
 			};
 		}),
 

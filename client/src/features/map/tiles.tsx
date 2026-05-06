@@ -12,6 +12,8 @@ import { options } from '@shared/config';
 import { useSettings } from '@shared/hooks/use-settings';
 import { useCoordsObserver } from './hooks/use-coords-observer';
 import { useDraw } from '@shared/store/draw';
+import { useTabs } from '@shared/store/tabs';
+import { TrackView } from './components/track';
 
 export const Tiles = () => {
 	const { id = '' } = useParams();
@@ -24,6 +26,7 @@ export const Tiles = () => {
 	const { time, date, variable, pressure, vmax, vmin, type } = useSettings();
 
 	const { currentMarker } = useDraw();
+	const { tab } = useTabs();
 
 	const [filters] = useState<ParamFilters['filters']>([
 		{ field: 'type', condition: 'equals', value: 'coords' },
@@ -88,7 +91,8 @@ export const Tiles = () => {
 		<>
 			{isLoading && <Loader />}
 			<TileLayer url="https://{s}.tile.osm.org/{z}/{x}/{y}.png" />
-			{currentMarker && <Drawer />}
+			{currentMarker && tab === 'layer' && <Drawer />}
+			{tab === 'track' && <TrackView />}
 			{variable && (
 				<TileLayer
 					opacity={0.4}

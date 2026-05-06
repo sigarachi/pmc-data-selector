@@ -6,11 +6,20 @@ import { ButtonWrapper, TabWrapper } from './sidebar.style';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { PmcData } from '../pmc-data';
 import { LayerData } from '../layer-data';
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { TrackData } from '../track-data';
+import { useTabs, type TabValue } from '@shared/store/tabs';
 
 export const SideBar = () => {
 	const { flag, toggle } = useToggle(true);
-	const [selected, setSelected] = useState<string>('data');
+
+	const { tab, setTab, reset } = useTabs();
+
+	useEffect(() => {
+		return () => {
+			reset();
+		};
+	}, [reset]);
 
 	return (
 		<ControlsWrapperStyled opened={flag}>
@@ -28,16 +37,18 @@ export const SideBar = () => {
 					<PmcSelector />
 					<TabWrapper>
 						<Tabs
-							selected={selected}
-							onSelect={(tab) => setSelected(tab.value.toString())}
+							selected={tab}
+							onSelect={(tab) => setTab(tab.value.toString() as TabValue)}
 							options={[
 								{ title: 'Данные', value: 'data' },
 								{ title: 'Разметка', value: 'layer' },
+								{ title: 'Трек', value: 'track' },
 							]}
 						/>
 					</TabWrapper>
-					{selected === 'data' && <PmcData />}
-					{selected === 'layer' && <LayerData />}
+					{tab === 'data' && <PmcData />}
+					{tab === 'layer' && <LayerData />}
+					{tab === 'track' && <TrackData />}
 					<Variables />
 				</>
 			)}

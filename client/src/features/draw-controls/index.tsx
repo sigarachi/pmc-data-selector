@@ -50,8 +50,9 @@ export const DrawControls = () => {
 		mutationFn: (values: CreateMarker) => MarkerService.create(values),
 		onSuccess: async () => {
 			await Promise.allSettled([
-				await refetch(),
-				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+				refetch(),
+				queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+				queryClient.removeQueries({ queryKey: ['track'] }),
 			]);
 			toast.success('Маркер создан');
 		},
@@ -60,7 +61,11 @@ export const DrawControls = () => {
 	const { mutate: updateMutation } = useMutation({
 		mutationFn: (values: UpdateMarker) => MarkerService.update(values),
 		onSuccess: async () => {
-			await refetch();
+			await Promise.allSettled([
+				refetch(),
+				queryClient.removeQueries({ queryKey: ['track'] }),
+			]);
+
 			toast.success('Маркер сохранен');
 		},
 	});
@@ -70,8 +75,9 @@ export const DrawControls = () => {
 		onSuccess: async () => {
 			// reset();
 			await Promise.allSettled([
-				await refetch(),
-				await queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+				refetch(),
+				queryClient.removeQueries({ queryKey: ['pmc-list'] }),
+				queryClient.removeQueries({ queryKey: ['track'] }),
 			]);
 			toast.success('Маркер удалён');
 		},

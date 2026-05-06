@@ -13,7 +13,7 @@ export const TrackData = () => {
 		queryFn: () => MarkerService.getList(id),
 	});
 
-	const { markers, setMarkers, reset } = useTrack();
+	const { setMarkers, reset } = useTrack();
 
 	useEffect(() => {
 		if (data) {

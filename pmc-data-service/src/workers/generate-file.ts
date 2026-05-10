@@ -1,4 +1,3 @@
-import { LayerService } from "@services/layer";
 import { amqp } from "../libs/amqp";
 import { Queues } from "../libs/amqp/interfaces";
 import logger from "../libs/logger";
@@ -6,6 +5,7 @@ import { isFileRequest } from "../utils/typeguards";
 import { Input, stringify } from "csv-stringify/sync";
 import fs from "fs";
 import { FileService } from "@services/file";
+import { MarkerService } from "@services/marker";
 
 const generateFile = async (message: object) => {
   if (!isFileRequest(message)) {
@@ -23,8 +23,8 @@ const generateFile = async (message: object) => {
   try {
     await FileService.update(file.id, { status: "running" });
 
-    const layers = await LayerService.getAll();
-    const output = stringify(layers as Input, { header: true });
+    const markers = await MarkerService.getAll();
+    const output = stringify(markers as Input, { header: true });
 
     const path = `./files/${file.generationDate.toLocaleDateString("ru-RU")}.csv`;
 

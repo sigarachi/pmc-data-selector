@@ -1,4 +1,4 @@
-import { create, getById, updateInfo } from "@db/file";
+import { create, getById, updateInfo, getList } from "@db/file";
 import { UpdateFile } from "@models/file";
 
 export class FileService {
@@ -8,6 +8,10 @@ export class FileService {
 
   static async getById(id: string) {
     return getById(id);
+  }
+
+  static async getList() {
+    return getList();
   }
 
   static async update(id: string, values: UpdateFile) {

@@ -1,8 +1,9 @@
 import type { PMC } from '@shared/api/models/pmc';
 import { PmcService } from '@shared/api/services/pmc';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
 	Button,
+	Checkbox,
 	Input,
 	ModalWindow,
 	PageLayout,
@@ -23,9 +24,11 @@ import { useSearch } from '@shared/hooks/use-search';
 import { usePagination } from '@shared/hooks/use-pagination';
 import { roundToHour } from '@shared/utils/round-time';
 import { format } from 'date-fns';
+import { FileService } from '@shared/api/services/file';
 
 export const SelectPmc = () => {
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const { flag, toggleOn, toggleOff } = useToggle();
 	const { search, handleSearch } = useSearch();
@@ -55,6 +58,14 @@ export const SelectPmc = () => {
 		},
 	});
 
+	const { mutate: fileMutation } = useMutation({
+		mutationFn: (id?: string) => FileService.generateFile(id),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ['files'] });
+			toggleOff();
+		},
+	});
+
 	const handleRowClick = useCallback((row: PMC) => {
 		navigate(
 			`/map/${row.id}?date=${format(new Date(row.name.replace('ПМЦ ', '').split(' ')[0]), 'MM/dd/yyyy')}&time=${roundToHour(new Date(row.name.replace('ПМЦ ', '').trim())).getHours()}:00`
@@ -80,6 +91,15 @@ export const SelectPmc = () => {
 			}
 		},
 		[handleIncreasePage, data]
+	);
+
+	const handleGenerateFile = useCallback(
+		(id?: string) => (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			fileMutation(id);
+		},
+		[]
 	);
 
 	useEffect(() => {
@@ -131,6 +151,17 @@ export const SelectPmc = () => {
 									title: 'Наличие разметки',
 									render: (row) => (
 										<Text variant="body1">{row ? 'Есть' : 'Нет'}</Text>
+									),
+								},
+								{
+									accessor: 'id',
+									title: 'Действия',
+									render: (row) => (
+										<Button
+											size={'default'}
+											onClick={handleGenerateFile(row.toString())}>
+											Сгенерировать файл
+										</Button>
 									),
 								},
 							]}

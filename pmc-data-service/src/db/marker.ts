@@ -16,6 +16,8 @@ export const getList = async (
     },
   });
 
+export const getAll = async () => prisma.marker.findMany();
+
 export const getById = async (id: string) =>
   prisma.marker.findFirstOrThrow({
     where: {

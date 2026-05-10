@@ -1,4 +1,11 @@
-import { create, getList, update, getById, deleteMarker } from "@db/marker";
+import {
+  create,
+  getList,
+  update,
+  getById,
+  deleteMarker,
+  getAll,
+} from "@db/marker";
 import { CreateMarkerDto, MarkerFilters } from "../models/marker";
 import { DbFilter } from "@models/common";
 
@@ -15,6 +22,10 @@ export class MarkerService {
     }
 
     return getList(pmcId, preparedFilters);
+  }
+
+  static async getAll() {
+    return getAll();
   }
 
   static async getById(id: string) {

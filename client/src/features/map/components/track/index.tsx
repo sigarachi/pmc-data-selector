@@ -2,9 +2,14 @@ import { useTrack } from '@shared/store/track';
 import { format } from 'date-fns';
 import { useMemo } from 'react';
 import { CircleMarker, Polygon, Polyline, Popup } from 'react-leaflet';
+import { useSearchParams } from 'react-router-dom';
 
 export const TrackView = () => {
+	const [searchParams] = useSearchParams();
+
 	const { markers } = useTrack();
+
+	const showPoly = searchParams.get('showPoly') === 'true';
 
 	const pointsPositions = useMemo(
 		() =>
@@ -34,7 +39,7 @@ export const TrackView = () => {
 								</Popup>
 							</CircleMarker>
 						)}
-						{marker.type === 'poly' && (
+						{showPoly && marker.type === 'poly' && (
 							<>
 								{marker.polygons.length && (
 									<Polygon

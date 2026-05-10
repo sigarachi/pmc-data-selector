@@ -46,7 +46,7 @@ export const TrackData = () => {
 
 	return (
 		<>
-			<Button onClick={handleChange}>
+			<Button onClick={handleChange} size="fullWidth">
 				{showPoly ? 'Скрыть' : 'Показать'} полигоны
 			</Button>
 		</>

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { amqp } from "@libs/amqp";
-import { Queues } from "@libs/amqp/interfaces";
+import { GenerateFileType, Queues } from "@libs/amqp/interfaces";
 import { FileService } from "@services/file";
 import logger from "@libs/logger";
 import path from "path";
@@ -41,12 +41,12 @@ export class FileController {
   }
 
   static async startGeneration(
-    req: Request<never, never, { id?: string }>,
+    req: Request<never, never, { id?: string, type: GenerateFileType }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const { id } = req.body;
+      const { id, type } = req.body;
 
       if (!id) {
       }
@@ -57,7 +57,7 @@ export class FileController {
         throw new Error("Error on creating file");
       }
 
-      amqp.send(Queues.GenerateFileTask, { fileId: file.id });
+      amqp.send(Queues.GenerateFileTask, { fileId: file.id, type });
       res.sendStatus(200);
     } catch (e) {
       logger.error(e);

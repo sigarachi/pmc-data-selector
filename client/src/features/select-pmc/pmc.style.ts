@@ -37,6 +37,23 @@ export const PaginationWrapperStyled = styled.div`
 	gap: 8px;
 `;
 
+export const ControlWrapperStyled = styled.div`
+	width: 100%;
+
+	display: flex;
+	flex-direction: row;
+	gap: 8px;
+
+	justify-content: space-between;
+`;
+
+export const GenerationWrapperStyled = styled.div`
+	display: flex;
+	flex-direction: column;
+
+	gap: 5px;
+`;
+
 export const ContentWrapperStyled = styled.div`
 	width: 100%;
 	height: 100%;

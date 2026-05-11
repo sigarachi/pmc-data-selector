@@ -13,6 +13,8 @@ import {
 import {
 	ButtonsColumnWrapperStyled,
 	ContentWrapperStyled,
+	ControlWrapperStyled,
+	GenerationWrapperStyled,
 	PageWrapperStyled,
 	PaginationWrapperStyled,
 } from './pmc.style';
@@ -26,6 +28,7 @@ import { roundToHour } from '@shared/utils/round-time';
 import { format } from 'date-fns';
 import { FileService } from '@shared/api/services/file';
 import type { AppFileType } from '@shared/api/models/file';
+import { toast } from 'react-toastify';
 
 export const SelectPmc = () => {
 	const navigate = useNavigate();
@@ -64,6 +67,7 @@ export const SelectPmc = () => {
 			FileService.generateFile(type, id),
 		onSuccess: async () => {
 			await queryClient.removeQueries({ queryKey: ['files'] });
+			toast.success('Начата генерация файла');
 			toggleOff();
 		},
 	});
@@ -123,10 +127,25 @@ export const SelectPmc = () => {
 
 				<PageLayout.Content>
 					<ContentWrapperStyled>
-						<Input
-							placeholder="Поиск"
-							onChange={(value) => handleSearch(String(value))}
-						/>
+						<ControlWrapperStyled>
+							<Input
+								placeholder="Поиск"
+								onChange={(value) => handleSearch(String(value))}
+							/>
+							<GenerationWrapperStyled>
+								<Text variant="body1">Массовая генерация</Text>
+								<ControlWrapperStyled>
+									<Button size="small" onClick={handleGenerateFile('csv')}>
+										csv
+									</Button>
+
+									<Button size="small" onClick={handleGenerateFile('xlsx')}>
+										xlsx
+									</Button>
+								</ControlWrapperStyled>
+							</GenerationWrapperStyled>
+						</ControlWrapperStyled>
+
 						<Table<PMC>
 							data={data?.list ?? []}
 							onRowClick={handleRowClick}

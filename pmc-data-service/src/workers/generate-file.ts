@@ -24,12 +24,16 @@ const generateXlsx = (array: Array<object>, fileName: string): string => {
   const workbook = utils.book_new();
 
   const pmcSheet = utils.json_to_sheet(array, {
-    header: ["ID", "Тип", "Дата/время", "ID ПМЦ", "Координаты точек объекта"],
+    // header: ["ID", "Тип", "Дата/время", "ID ПМЦ", "Координаты точек объекта"],
   });
 
   utils.book_append_sheet(workbook, pmcSheet, "ПМЦ");
 
-  const buffer = write(workbook, { type: "buffer", bookType: "xlsx" });
+  const buffer = write(workbook, {
+    type: "buffer",
+    bookType: "xlsx",
+    Props: { Author: "PMC Data Selector autogen" },
+  });
 
   const path = `./files/${fileName}`;
 

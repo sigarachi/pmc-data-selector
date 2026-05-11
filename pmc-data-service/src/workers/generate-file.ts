@@ -48,16 +48,15 @@ const generateFile = async (message: object) => {
     return;
   }
 
-  const file = await FileService.getById(message.fileId);
-  const type = message.type;
-  const pmcId = message.pmcId;
-
-  if (!file) {
-    logger.error("File worker: no file");
-    return;
-  }
-
   try {
+    const file = await FileService.getById(message.fileId);
+    const type = message.type;
+    const pmcId = message.pmcId;
+
+    if (!file) {
+      logger.error("File worker: no file");
+      return;
+    }
     await FileService.update(file.id, { status: "running" });
 
     const markers = await MarkerService.getAll(pmcId);
@@ -81,7 +80,7 @@ const generateFile = async (message: object) => {
     });
   } catch (e) {
     logger.error(e);
-    await FileService.update(file.id, { status: "error" });
+    await FileService.update(message.fileId, { status: "error" });
   }
 };
 

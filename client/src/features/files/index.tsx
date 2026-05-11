@@ -24,7 +24,7 @@ import { useCallback } from 'react';
 export const Files = () => {
 	const { page, pageSize, handleIncreasePage } = usePagination();
 
-	const { data, isLoading } = useQuery({
+	const { data } = useQuery({
 		queryKey: ['files'],
 		queryFn: () => FileService.getList(page, pageSize),
 	});

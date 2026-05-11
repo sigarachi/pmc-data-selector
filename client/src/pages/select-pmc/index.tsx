@@ -1,3 +1,4 @@
-import { SelectPmc } from "@features/select-pmc";
+import { SelectPmc } from '@features/select-pmc';
+import { withNavigation } from '@shared/hocs/with-navigation';
 
-export const SelectPmcPage = () => <SelectPmc />;
+export const SelectPmcPage = withNavigation(() => <SelectPmc />);

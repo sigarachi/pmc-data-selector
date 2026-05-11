@@ -4,13 +4,34 @@ import { GenerateFileType, Queues } from "@libs/amqp/interfaces";
 import { FileService } from "@services/file";
 import logger from "@libs/logger";
 import path from "path";
+import { PaginatedRequest } from "@models/common";
 
 export class FileController {
-  static async getList(req: Request, res: Response, next: NextFunction) {
+  static async getList(
+    req: Request<never, never, never, PaginatedRequest>,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const files = await FileService.getList();
+      const { page, pageSize } = req.query;
 
-      return res.send({ files });
+      logger.info(`[File] Get list page=${page}, pageSize=${pageSize}`);
+
+      const offset = Number(page) || 1;
+      const limit = Number(pageSize) || 10;
+
+      const skip = (offset - 1) * limit;
+
+      const [files, count] = await FileService.getList(limit, skip);
+
+      const totalPages = Math.ceil(count / limit);
+
+      return res.send({
+        files,
+        page,
+        pageSize,
+        isLastPage: offset === totalPages,
+      });
     } catch (e) {
       logger.error(e);
       next(e);
@@ -33,6 +54,11 @@ export class FileController {
         throw new Error("[File]: file is generating");
       }
 
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${file.name}"`,
+      );
+
       return res.sendFile(path.resolve(file.path));
     } catch (e) {
       logger.error(e);
@@ -41,15 +67,12 @@ export class FileController {
   }
 
   static async startGeneration(
-    req: Request<never, never, { id?: string, type: GenerateFileType }>,
+    req: Request<never, never, { id?: string; type: GenerateFileType }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const { id, type } = req.body;
-
-      if (!id) {
-      }
 
       const file = await FileService.createFile("");
 
@@ -57,7 +80,7 @@ export class FileController {
         throw new Error("Error on creating file");
       }
 
-      amqp.send(Queues.GenerateFileTask, { fileId: file.id, type });
+      amqp.send(Queues.GenerateFileTask, { fileId: file.id, type, pmcId: id });
       res.sendStatus(200);
     } catch (e) {
       logger.error(e);

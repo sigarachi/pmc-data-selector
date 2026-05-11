@@ -3,7 +3,6 @@ import { PmcService } from '@shared/api/services/pmc';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
 	Button,
-	Checkbox,
 	Input,
 	ModalWindow,
 	PageLayout,
@@ -12,6 +11,7 @@ import {
 	useToggle,
 } from '@university-ecosystem/ui-kit';
 import {
+	ButtonsColumnWrapperStyled,
 	ContentWrapperStyled,
 	PageWrapperStyled,
 	PaginationWrapperStyled,
@@ -25,6 +25,7 @@ import { usePagination } from '@shared/hooks/use-pagination';
 import { roundToHour } from '@shared/utils/round-time';
 import { format } from 'date-fns';
 import { FileService } from '@shared/api/services/file';
+import type { AppFileType } from '@shared/api/models/file';
 
 export const SelectPmc = () => {
 	const navigate = useNavigate();
@@ -59,9 +60,10 @@ export const SelectPmc = () => {
 	});
 
 	const { mutate: fileMutation } = useMutation({
-		mutationFn: (id?: string) => FileService.generateFile(id),
+		mutationFn: ({ id, type }: { id?: string; type: AppFileType }) =>
+			FileService.generateFile(type, id),
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['files'] });
+			await queryClient.removeQueries({ queryKey: ['files'] });
 			toggleOff();
 		},
 	});
@@ -94,10 +96,10 @@ export const SelectPmc = () => {
 	);
 
 	const handleGenerateFile = useCallback(
-		(id?: string) => (e: React.MouseEvent) => {
+		(type: AppFileType, id?: string) => (e: React.MouseEvent) => {
 			e.preventDefault();
 			e.stopPropagation();
-			fileMutation(id);
+			fileMutation({ id, type });
 		},
 		[]
 	);
@@ -132,6 +134,7 @@ export const SelectPmc = () => {
 								{
 									accessor: 'name',
 									title: 'Название',
+									span: 1,
 									render: (row) => (
 										<Text variant="body1" bold>
 											<>
@@ -155,13 +158,21 @@ export const SelectPmc = () => {
 								},
 								{
 									accessor: 'id',
-									title: 'Действия',
+									title: 'Генерация',
+									span: 0.1,
 									render: (row) => (
-										<Button
-											size={'default'}
-											onClick={handleGenerateFile(row.toString())}>
-											Сгенерировать файл
-										</Button>
+										<ButtonsColumnWrapperStyled>
+											<Button
+												size={'small'}
+												onClick={handleGenerateFile('csv', row.toString())}>
+												csv
+											</Button>
+											<Button
+												size={'small'}
+												onClick={handleGenerateFile('xlsx', row.toString())}>
+												xlsx
+											</Button>
+										</ButtonsColumnWrapperStyled>
 									),
 								},
 							]}

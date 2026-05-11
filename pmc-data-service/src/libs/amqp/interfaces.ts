@@ -3,11 +3,12 @@ export enum Queues {
   GenerateFileXLSX = "generate-file-xlsx",
 }
 
-export type GenerateFileType = 'csv' | 'xlsx';
+export type GenerateFileType = "csv" | "xlsx";
 
 export interface GeneraeteFileTaskProps {
   fileId: string;
   type: GenerateFileType;
+  pmcId?: string;
 }
 
 export interface AMQPClientOptionsSpec {

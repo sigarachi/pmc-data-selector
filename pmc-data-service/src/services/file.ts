@@ -1,4 +1,4 @@
-import { create, getById, updateInfo, getList } from "@db/file";
+import { create, getById, updateInfo, getList, getCount } from "@db/file";
 import { UpdateFile } from "@models/file";
 
 export class FileService {
@@ -10,8 +10,8 @@ export class FileService {
     return getById(id);
   }
 
-  static async getList() {
-    return getList();
+  static async getList(take: number, skip: number) {
+    return Promise.all([getList(take, skip), getCount()]);
   }
 
   static async update(id: string, values: UpdateFile) {

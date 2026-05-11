@@ -6,6 +6,7 @@ export const network = axios.create({
 	baseURL: options.apiUrl,
 	headers: {
 		'Content-Type': 'application/json',
+		'request-id': crypto.randomUUID(),
 	},
 	withCredentials: false,
 });

@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from '../common/interfaces';
+
 export type AppFileStatus = 'accepted' | 'running' | 'done' | 'error';
 
 export interface AppFile {
@@ -15,6 +17,8 @@ export const AppFileDictionary: Record<AppFileStatus, string> = {
 	done: 'Готов',
 };
 
-export interface AppFileListResponse {
+export interface AppFileListResponse extends PaginatedResponse {
 	files: Array<AppFile>;
 }
+
+export type AppFileType = 'xlsx' | 'csv';

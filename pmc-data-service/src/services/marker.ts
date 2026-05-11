@@ -24,8 +24,16 @@ export class MarkerService {
     return getList(pmcId, preparedFilters);
   }
 
-  static async getAll() {
-    return getAll();
+  static async getAll(pmcId?: string) {
+    const preparedFilters: DbFilter<Pick<CreateMarkerDto, "pmcId">> = {};
+
+    if (pmcId) {
+      preparedFilters["pmcId"] = {
+        equals: pmcId,
+      };
+    }
+
+    return getAll(preparedFilters);
   }
 
   static async getById(id: string) {

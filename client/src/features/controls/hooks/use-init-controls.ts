@@ -17,5 +17,9 @@ export const useInitControls = () => {
 			searchParams.set('showRadius', 'true');
 			setSearchParams(searchParams);
 		}
+		if (!searchParams.get('showPoly')) {
+			searchParams.set('showPoly', 'true');
+			setSearchParams(searchParams);
+		}
 	}, [searchParams]);
 };

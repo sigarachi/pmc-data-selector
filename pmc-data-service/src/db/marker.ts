@@ -16,7 +16,14 @@ export const getList = async (
     },
   });
 
-export const getAll = async () => prisma.marker.findMany();
+export const getAll = async (
+  filters: DbFilter<Pick<CreateMarkerDto, "pmcId">>,
+) =>
+  prisma.marker.findMany({
+    where: {
+      ...filters,
+    },
+  });
 
 export const getById = async (id: string) =>
   prisma.marker.findFirstOrThrow({

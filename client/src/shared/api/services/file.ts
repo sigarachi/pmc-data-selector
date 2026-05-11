@@ -1,24 +1,47 @@
+import type { AxiosHeaderValue } from 'axios';
 import { network } from '../common';
-import type { AppFileListResponse } from '../models/file';
+import type { AppFileListResponse, AppFileType } from '../models/file';
 
 export class FileService {
-	static async getList(): Promise<AppFileListResponse> {
-		const { data } =
-			await network.get<AppFileListResponse>(`/pmc-api/file/list`);
+	static async getList(
+		page: number,
+		pageSize: number
+	): Promise<AppFileListResponse> {
+		const { data } = await network.get<AppFileListResponse>(
+			`/pmc-api/file/list?page=${page}&pageSize=${pageSize}`
+		);
 
 		return data;
 	}
 
-	static async generateFile(id?: string): Promise<void> {
-		await network.post('/pmc-api/file/startGeneration', {
+	static async generateFile(type: AppFileType, id?: string): Promise<void> {
+		await network.post('/pmc-api/file/generate', {
 			id,
+			type,
 		});
 	}
 
 	static async downloadFile(id: string): Promise<void> {
-		const { data } = await network.get(`/pmc-api/file/${id}/download`, {
-			responseType: 'blob',
-		});
+		const { data, headers } = await network.get(
+			`/pmc-api/file/${id}/download`,
+			{
+				responseType: 'blob',
+			}
+		);
+
+		const contentDisposition = headers[
+			'Content-Disposition'
+		] as AxiosHeaderValue;
+
+		let fileName = '';
+
+		if (contentDisposition && typeof contentDisposition === 'string') {
+			fileName = contentDisposition
+				.split(';')[1]
+				.split('filename')[1]
+				.split('=')[1]
+				.trim();
+		}
 
 		const file = new Blob([data], { type: data.type });
 
@@ -27,7 +50,7 @@ export class FileService {
 		const link = document.createElement('a');
 
 		link.href = url;
-		link.download = 'file.csv';
+		link.download = fileName;
 		document.body.appendChild(link);
 		link.click();
 

@@ -26,7 +26,7 @@ export const Files = () => {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['files'],
-		queryFn: () => FileService.getList(),
+		queryFn: () => FileService.getList(page, pageSize),
 	});
 
 	const handleDownloadFile = useCallback(async (id: string) => {
@@ -44,6 +44,15 @@ export const Files = () => {
 						<Table<AppFile>
 							data={data?.files ?? []}
 							columns={[
+								{
+									accessor: 'name',
+									title: 'Имя',
+									render: (row) => (
+										<Text variant="body1" bold>
+											{row.toString()}
+										</Text>
+									),
+								},
 								{
 									accessor: 'generationDate',
 									title: 'Дата генерации',
@@ -71,6 +80,7 @@ export const Files = () => {
 										</Status>
 									),
 								},
+
 								{
 									accessor: 'id',
 									title: '',
@@ -96,14 +106,14 @@ export const Files = () => {
 							<Text variant="body1" bold>
 								{page}
 							</Text>
-							{/* {!data?.isLastPage && (
+							{!data?.isLastPage && (
 								<Button
 									size="inherit"
 									onlyIcon
 									icon={<>{'>'}</>}
 									onClick={() => handleIncreasePage()}
 								/>
-							)} */}
+							)}
 						</PaginationWrapperStyled>
 					</ContentWrapperStyled>
 				</PageLayout.Content>

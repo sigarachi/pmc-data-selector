@@ -1,6 +1,6 @@
 import amqp from "amqplib";
 
-import { AMQPClientOptionsSpec } from "./interfaces";
+import { AMQPClientOptionsSpec, AMQPMode } from "./interfaces";
 import logger from "../logger";
 
 /**
@@ -38,12 +38,19 @@ export default class AMQPClient {
   private connected: boolean = false;
 
   /**
+   * Virtual host
+   * @private
+   */
+  private mode: AMQPMode = "DEV";
+
+  /**
    * Client constructor
    * @param options
    */
   constructor(options: AMQPClientOptionsSpec) {
     this.url = options.url;
     this.queues = options.queues;
+    this.mode = options.mode;
   }
 
   /**
@@ -51,7 +58,9 @@ export default class AMQPClient {
    */
   async connect(): Promise<boolean> {
     logger.info("AMQP: Start connection");
-    this.connection = await amqp.connect(this.url);
+    this.connection = await amqp.connect(
+      `${this.url}/${this.mode.toLowerCase()}`,
+    );
     this.channel = await this.connection.createChannel();
 
     process.once("SIGINT", async () => {

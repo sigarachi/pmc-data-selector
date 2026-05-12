@@ -5,6 +5,8 @@ export enum Queues {
 
 export type GenerateFileType = "csv" | "xlsx";
 
+export type AMQPMode = "DEV" | "PROD";
+
 export interface GeneraeteFileTaskProps {
   fileId: string;
   type: GenerateFileType;
@@ -14,4 +16,5 @@ export interface GeneraeteFileTaskProps {
 export interface AMQPClientOptionsSpec {
   url: string;
   queues: Queues[];
+  mode: AMQPMode;
 }

@@ -34,7 +34,7 @@ export const SelectPmc = () => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
-	const { flag, toggleOn, toggleOff } = useToggle();
+	const { flag, toggleOff } = useToggle();
 	const { search, handleSearch } = useSearch();
 	const { page, pageSize, handleIncreasePage } = usePagination();
 

@@ -17,12 +17,14 @@ export class PmcController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { filters } = req.body;
       const { page, pageSize } = req.query;
 
       logger.info(
         `[PMC] Get list filters=${JSON.stringify(filters)}, page=${page}, pageSize=${pageSize}`,
+        { reqId },
       );
 
       const offset = Number(page) || 1;
@@ -41,16 +43,17 @@ export class PmcController {
         isLastPage: offset === totalPages,
       });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
 
   static async getById(req: Request, res: Response, next: NextFunction) {
+    const reqId = req.headers["request-id"];
     try {
       const { id } = req.params;
 
-      logger.info(`[PMC] Get id=${id}`);
+      logger.info(`[PMC] Get id=${id}`, { reqId });
 
       if (!id) {
         throw new Error("No id provided");
@@ -60,7 +63,7 @@ export class PmcController {
 
       return res.status(200).json({ pmc: data });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
@@ -70,10 +73,11 @@ export class PmcController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const payload = req.body;
 
-      logger.info(`[PMC] Create body=${JSON.stringify(payload)}`);
+      logger.info(`[PMC] Create body=${JSON.stringify(payload)}`, { reqId });
 
       if (!payload) {
         throw new Error("error in request body");
@@ -83,7 +87,7 @@ export class PmcController {
 
       return res.status(200).json(data);
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }

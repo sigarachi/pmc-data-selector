@@ -5,11 +5,17 @@ import { isFileRequest } from "../utils/typeguards";
 import { Input, stringify } from "csv-stringify/sync";
 import { utils, write } from "xlsx";
 import fs from "fs";
+import { format } from "date-fns";
 import { FileService } from "@services/file";
 import { MarkerService } from "@services/marker";
+import { PmcService } from "@services/pmc";
+import { flatObject } from "../utils/flat-object";
+import util from "util";
 
 const generateCsvFile = (array: Array<object>, fileName: string): string => {
-  const output = stringify(array as Input, { header: true });
+  const output = stringify(array as Input, {
+    header: true,
+  });
 
   const path = `./files/${fileName}`;
 
@@ -52,6 +58,13 @@ const generateFile = async (message: object) => {
     const file = await FileService.getById(message.fileId);
     const type = message.type;
     const pmcId = message.pmcId;
+    let pmcDate: Date | null = null;
+
+    if (pmcId) {
+      const pmc = await PmcService.getById(pmcId);
+
+      pmcDate = pmc.dateTime;
+    }
 
     if (!file) {
       logger.error("File worker: no file");
@@ -61,16 +74,40 @@ const generateFile = async (message: object) => {
 
     const markers = await MarkerService.getAll(pmcId);
 
+    const flatenMarkers = markers
+      .map((item) => flatObject(item))
+      .map((item) => {
+        const formatedItem = {
+          ...item,
+        };
+
+        for (const i in formatedItem) {
+          const key = i as keyof typeof formatedItem;
+          if (util.types.isDate(formatedItem[key])) {
+            formatedItem[key] = format(
+              formatedItem[key],
+              "yyyy-MM-dd_HH-mm",
+            ) as never;
+          }
+        }
+
+        return formatedItem;
+      });
+
     let filePath;
 
-    const fileName = `${file.id}-${file.generationDate.toLocaleDateString("ru-RU")}.${type}`;
+    const fileDate = pmcDate
+      ? `pmc_${format(pmcDate, "yyyy-MM-dd_HH-mm")}`
+      : `mass_${format(file.generationDate, "yyyy-MM-dd_HH-mm")}`;
+
+    const fileName = `${fileDate}-${file.id}.${type}`;
 
     if (type === "csv") {
-      filePath = generateCsvFile(markers, fileName);
+      filePath = generateCsvFile(flatenMarkers, fileName);
     }
 
     if (type === "xlsx") {
-      filePath = generateXlsx(markers, fileName);
+      filePath = generateXlsx(flatenMarkers, fileName);
     }
 
     await FileService.update(file.id, {

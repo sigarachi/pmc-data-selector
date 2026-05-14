@@ -12,10 +12,13 @@ export class FileController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { page, pageSize } = req.query;
 
-      logger.info(`[File] Get list page=${page}, pageSize=${pageSize}`);
+      logger.info(`[File] Get list page=${page}, pageSize=${pageSize}`, {
+        reqId,
+      });
 
       const offset = Number(page) || 1;
       const limit = Number(pageSize) || 10;
@@ -33,16 +36,19 @@ export class FileController {
         isLastPage: offset === totalPages,
       });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
 
   static async getFile(req: Request, res: Response, next: NextFunction) {
+    const reqId = req.headers["request-id"];
     try {
       const { id } = req.params;
 
-      logger.info(`[File] attempting to download the file with id=${id}`);
+      logger.info(`[File] attempting to download the file with id=${id}`, {
+        reqId,
+      });
 
       const file = await FileService.getById(id);
 
@@ -61,7 +67,7 @@ export class FileController {
 
       return res.sendFile(path.resolve(file.path));
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
@@ -71,6 +77,7 @@ export class FileController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { id, type } = req.body;
 
@@ -83,7 +90,7 @@ export class FileController {
       amqp.send(Queues.GenerateFileTask, { fileId: file.id, type, pmcId: id });
       res.sendStatus(200);
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }

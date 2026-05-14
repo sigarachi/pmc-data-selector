@@ -23,6 +23,18 @@ export const getAll = async (
     where: {
       ...filters,
     },
+    select: {
+      dateTime: true,
+      pmcId: true,
+      polygons: true,
+      name: true,
+      pmc: {
+        select: {
+          name: true,
+          dateTime: true,
+        },
+      },
+    },
   });
 
 export const getById = async (id: string) =>

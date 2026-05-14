@@ -119,12 +119,6 @@ export const SelectPmc = () => {
 	return (
 		<PageLayout>
 			<PageWrapperStyled>
-				<PageLayout.Header
-					title="Список ПМЦ"
-					actions={[{ children: 'Добавить', onClick: toggleOn }]}>
-					<>asdasd</>
-				</PageLayout.Header>
-
 				<PageLayout.Content>
 					<ContentWrapperStyled>
 						<ControlWrapperStyled>

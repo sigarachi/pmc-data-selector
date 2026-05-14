@@ -10,6 +10,7 @@ export class ParamsController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { pmcId } = req.params;
 
@@ -17,6 +18,7 @@ export class ParamsController {
 
       logger.info(
         `[Param] Get list pmcId=${pmcId}, filters=${JSON.stringify(filters)}`,
+        { reqId },
       );
 
       if (!pmcId) {
@@ -33,7 +35,7 @@ export class ParamsController {
 
       return res.status(200).json({ params: data });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
@@ -43,11 +45,14 @@ export class ParamsController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const payload = req.body;
       const { pmcId } = req.params;
 
-      logger.info(`[Param] Create pmcId=${pmcId}, ${JSON.stringify(payload)}`);
+      logger.info(`[Param] Create pmcId=${pmcId}, ${JSON.stringify(payload)}`, {
+        reqId,
+      });
 
       if (!payload || !pmcId) {
         throw new Error("Error in request body");
@@ -63,7 +68,7 @@ export class ParamsController {
 
       res.send(201);
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }

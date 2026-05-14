@@ -10,12 +10,14 @@ export class MarkerController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { pmcId } = req.params;
       const { filters } = req.body;
 
       logger.info(
         `[Marker] Get list pmcId=${pmcId}, filters=${JSON.stringify(filters)}`,
+        { reqId },
       );
 
       if (!pmcId) {
@@ -34,21 +36,23 @@ export class MarkerController {
         .status(200)
         .json({ markers: data.map((item) => ({ ...item })) });
     } catch (e) {
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
 
   static async getById(req: Request, res: Response, next: NextFunction) {
+    const reqId = req.headers["request-id"];
     try {
       const { id } = req.params;
 
-      logger.info(`[Marker] Get id=${id}`);
+      logger.info(`[Marker] Get id=${id}`, { reqId });
 
       const data = await MarkerService.getById(id);
 
       return res.status(200).json({ marker: data });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
@@ -58,11 +62,13 @@ export class MarkerController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { pmcId, name, polygons, type, dateTime } = req.body;
 
       logger.info(
         `[Marker] Create layerId=${pmcId}, ${JSON.stringify(req.body)}`,
+        { reqId },
       );
 
       if (!pmcId) {
@@ -96,7 +102,7 @@ export class MarkerController {
 
       return res.status(201).json({ marker: data });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
@@ -106,11 +112,14 @@ export class MarkerController {
     res: Response,
     next: NextFunction,
   ) {
+    const reqId = req.headers["request-id"];
     try {
       const { id } = req.params;
       const { ...rest } = req.body;
 
-      logger.info(`[Marker] Update id=${id}, ${JSON.stringify(rest)}`);
+      logger.info(`[Marker] Update id=${id}, ${JSON.stringify(rest)}`, {
+        reqId,
+      });
 
       const candidate = await MarkerService.getById(id);
 
@@ -122,16 +131,17 @@ export class MarkerController {
 
       return res.status(201).json({ marker: data });
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }
 
   static async delete(req: Request, res: Response, next: NextFunction) {
+    const reqId = req.headers["request-id"];
     try {
       const { id } = req.params;
 
-      logger.info(`[Marker] Delete id=${id}`);
+      logger.info(`[Marker] Delete id=${id}`, { reqId });
 
       const data = await MarkerService.delete(id);
 
@@ -143,7 +153,7 @@ export class MarkerController {
 
       return res.status(200).json({});
     } catch (e) {
-      logger.error(e);
+      logger.error((e as Error).message, { reqId });
       next(e);
     }
   }

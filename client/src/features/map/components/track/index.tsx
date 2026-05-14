@@ -67,7 +67,7 @@ export const TrackView = () => {
 						)}
 					</>
 				))}
-			{pointsPositions.length && (
+			{pointsPositions.length > 0 && (
 				<Polyline
 					//@ts-ignore
 					positions={pointsPositions}

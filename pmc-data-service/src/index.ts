@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import fileUpload from "express-fileupload";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import http from "http";
 import router from "./routes";
 import { amqp } from "@libs/amqp";

@@ -100,7 +100,7 @@ const generateFile = async (message: object) => {
       ? `pmc_${format(pmcDate, "yyyy-MM-dd_HH-mm")}`
       : `mass_${format(file.generationDate, "yyyy-MM-dd_HH-mm")}`;
 
-    const fileName = `${fileDate}-${file.id}.${type}`;
+    const fileName = `${fileDate}.${type}`;
 
     if (type === "csv") {
       filePath = generateCsvFile(flatenMarkers, fileName);
@@ -114,6 +114,7 @@ const generateFile = async (message: object) => {
       status: "done",
       path: filePath,
       name: fileName,
+      generationDate: new Date(Date.now()),
     });
   } catch (e) {
     logger.error(e);

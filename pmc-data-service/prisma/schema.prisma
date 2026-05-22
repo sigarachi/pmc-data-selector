@@ -14,6 +14,7 @@ model PMC {
   dateTime  DateTime @default(now())
   markers   Marker[]
   params    Param[]
+  files     File[]
 }
 
 model Param {
@@ -37,11 +38,15 @@ model Marker {
 }
 
 model File {
-  id             String     @id @default(uuid()) @db.Uuid
-  name           String     @default("")
-  generationDate DateTime   @default(now())
-  status         FileStatus @default(accepted)
-  path           String     @default("")
+  id             String        @id @default(uuid()) @db.Uuid
+  name           String        @default("")
+  generationDate DateTime      @default(now())
+  status         FileStatus    @default(accepted)
+  type           FileType      @default(single)
+  path           String        @default("")
+  extension      FileExtension @default(csv)
+  pmcId          String?       @db.Uuid
+  pmc            PMC?          @relation(fields: [pmcId], references: [id], onDelete: Cascade)
 }
 
 enum ParamType {
@@ -61,4 +66,14 @@ enum FileStatus {
   running
   done
   error
+}
+
+enum FileType {
+  mass
+  single
+}
+
+enum FileExtension {
+  csv
+  xlsx
 }

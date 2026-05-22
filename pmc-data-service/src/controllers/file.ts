@@ -5,6 +5,9 @@ import { FileService } from "@services/file";
 import logger from "@libs/logger";
 import path from "path";
 import { PaginatedRequest } from "@models/common";
+import { PmcService } from "@services/pmc";
+import { FileType } from "@prisma/client";
+import { FileFilters } from "@models/file";
 
 export class FileController {
   static async getList(
@@ -25,7 +28,7 @@ export class FileController {
 
       const skip = (offset - 1) * limit;
 
-      const [files, count] = await FileService.getList(limit, skip);
+      const [files, count] = await FileService.getList(limit, skip, []);
 
       const totalPages = Math.ceil(count / limit);
 
@@ -60,6 +63,7 @@ export class FileController {
         throw new Error("[File]: file is generating");
       }
 
+      res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="${file.name}"`,
@@ -81,7 +85,33 @@ export class FileController {
     try {
       const { id, type } = req.body;
 
-      const file = await FileService.createFile("");
+      const fileType: FileType = id ? "single" : "mass";
+
+      const filters: FileFilters["filters"] = [
+        { field: "type", value: fileType, condition: "equals" },
+        { field: "extension", value: type, condition: "equals" },
+      ];
+
+      if (id) {
+        const pmc = await PmcService.getById(id);
+
+        if (!pmc) {
+          throw new Error("No pmc found");
+        }
+
+        filters.push({ field: "pmcId", value: id, condition: "equals" });
+      }
+
+      const candidate = await FileService.getOneByFilters(filters);
+
+      const file =
+        candidate ??
+        (await FileService.createFile({
+          name: "",
+          type: fileType,
+          pmcId: id,
+          extension: type,
+        }));
 
       if (!file) {
         throw new Error("Error on creating file");

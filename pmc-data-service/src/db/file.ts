@@ -1,10 +1,18 @@
 import prisma from "@config/db";
-import { UpdateFile } from "@models/file";
+import { DbFilter } from "@models/common";
+import { CreateFileDto, UpdateFile } from "@models/file";
 
-export const getList = async (take: number, skip: number) =>
+export const getList = async (
+  take: number,
+  skip: number,
+  filters: DbFilter<UpdateFile>,
+) =>
   prisma.file.findMany({
     take,
     skip,
+    where: {
+      ...filters,
+    },
   });
 
 export const getCount = async () => prisma.file.count();
@@ -16,10 +24,13 @@ export const getById = async (id: string) =>
     },
   });
 
-export const create = async (name: string) =>
+export const getByFilters = async (filters: DbFilter<UpdateFile>) =>
+  prisma.file.findFirst({ where: { ...filters } });
+
+export const create = async (values: CreateFileDto) =>
   prisma.file.create({
     data: {
-      name,
+      ...values,
     },
   });
 

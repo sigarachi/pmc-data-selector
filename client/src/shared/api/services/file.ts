@@ -26,21 +26,21 @@ export class FileService {
 			`/pmc-api/file/${id}/download`,
 			{
 				responseType: 'blob',
+				withCredentials: true,
 			}
 		);
 
 		const contentDisposition = headers[
-			'Content-Disposition'
+			'content-disposition'
 		] as AxiosHeaderValue;
 
 		let fileName = '';
 
 		if (contentDisposition && typeof contentDisposition === 'string') {
-			fileName = contentDisposition
-				.split(';')[1]
-				.split('filename')[1]
-				.split('=')[1]
-				.trim();
+			//@ts-ignore
+			fileName = contentDisposition.match(
+				/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+			)[1] as string;
 		}
 
 		const file = new Blob([data], { type: data.type });

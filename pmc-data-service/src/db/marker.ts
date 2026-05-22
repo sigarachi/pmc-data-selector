@@ -35,6 +35,9 @@ export const getAll = async (
         },
       },
     },
+    orderBy: {
+      dateTime: "asc",
+    },
   });
 
 export const getById = async (id: string) =>

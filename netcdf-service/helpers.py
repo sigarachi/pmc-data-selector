@@ -3,7 +3,7 @@ import mercantile
 
 TILE_SIZE = 256
 
-MIN_LON = -10
+MIN_LON = -30
 MAX_LON = 200
 
 

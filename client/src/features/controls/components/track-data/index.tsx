@@ -3,6 +3,7 @@ import { Loader } from '@shared/components/loader';
 import { useTrack } from '@shared/store/track';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@university-ecosystem/ui-kit';
+import { orderBy } from 'lodash';
 import { useCallback, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
@@ -30,7 +31,7 @@ export const TrackData = () => {
 
 	useEffect(() => {
 		if (data) {
-			setMarkers(data.markers);
+			setMarkers(orderBy(data.markers, ['dateTime'], 'asc'));
 		}
 	}, [data?.markers]);
 

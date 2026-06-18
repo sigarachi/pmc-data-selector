@@ -16,8 +16,8 @@ export const TrackView = () => {
 			markers
 				.filter((item) => item.type === 'point')
 				.map((item) => (item.polygons.length ? item.polygons[0] : []))
-				.filter((item) => item.length),
-		// .filter(Boolean),
+				.filter((item) => item.length)
+				.filter(Boolean),
 
 		[markers]
 	);

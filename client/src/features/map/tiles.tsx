@@ -127,7 +127,7 @@ export const Tiles = () => {
 							<Circle
 								//@ts-ignore
 								center={item.value.trim().split(',').reverse()}
-								radius={Number(radius.value) * 1000}
+								radius={(Number(radius.value) / 2) * 1000}
 								pathOptions={{
 									fillColor:
 										item.name === 'formation_coords' ? 'red' : 'purple',

@@ -2,7 +2,8 @@ import { MarkerService } from '@shared/api/services/marker';
 import { Loader } from '@shared/components/loader';
 import { useTrack } from '@shared/store/track';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@university-ecosystem/ui-kit';
+import { Button, Text } from '@university-ecosystem/ui-kit';
+import { format } from 'date-fns';
 import { orderBy } from 'lodash';
 import { useCallback, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -27,7 +28,7 @@ export const TrackData = () => {
 		setSearchParams(searchParams);
 	}, [searchParams, setSearchParams]);
 
-	const { setMarkers, reset } = useTrack();
+	const { markers, setMarkers, reset } = useTrack();
 
 	useEffect(() => {
 		if (data) {
@@ -45,11 +46,21 @@ export const TrackData = () => {
 		return <Loader />;
 	}
 
+	const dates =
+		markers && markers.length
+			? [
+					format(markers[0].dateTime, 'dd.MM.yyyy HH:mm'),
+					format(markers[markers.length - 1].dateTime, 'dd.MM.yyyy HH:mm'),
+				]
+			: [];
+
 	return (
 		<>
 			<Button onClick={handleChange} size="fullWidth">
 				{showPoly ? 'Скрыть' : 'Показать'} полигоны
 			</Button>
+			<Text variant="body1">{'Период:'}</Text>
+			<Text variant="body1">{dates.join(' - ')}</Text>
 		</>
 	);
 };

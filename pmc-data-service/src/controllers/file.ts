@@ -124,4 +124,57 @@ export class FileController {
       next(e);
     }
   }
+
+  static async startParamsGeneration(
+    req: Request<never, never, { id?: string; type: GenerateFileType }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    const reqId = req.headers["request-id"];
+    try {
+      const { id, type } = req.body;
+
+      const fileType: FileType = id ? "single" : "mass";
+
+      const filters: FileFilters["filters"] = [
+        { field: "type", value: fileType, condition: "equals" },
+        { field: "extension", value: type, condition: "equals" },
+      ];
+
+      if (id) {
+        const pmc = await PmcService.getById(id);
+
+        if (!pmc) {
+          throw new Error("No pmc found");
+        }
+
+        filters.push({ field: "pmcId", value: id, condition: "equals" });
+      }
+
+      const candidate = await FileService.getOneByFilters(filters);
+
+      const file =
+        candidate ??
+        (await FileService.createFile({
+          name: "",
+          type: fileType,
+          pmcId: id,
+          extension: type,
+        }));
+
+      if (!file) {
+        throw new Error("Error on creating file");
+      }
+
+      amqp.send(Queues.GeneratePmcParamsTask, {
+        fileId: file.id,
+        type,
+        pmcId: id,
+      });
+      res.sendStatus(200);
+    } catch (e) {
+      logger.error((e as Error).message, { reqId });
+      next(e);
+    }
+  }
 }

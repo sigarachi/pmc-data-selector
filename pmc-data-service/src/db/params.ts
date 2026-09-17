@@ -14,6 +14,28 @@ export const getList = async (
     orderBy: [{ name: "desc" }, { title: "asc" }],
   });
 
+export const getAll = async (filters: DbFilter<{ pmcId: string }>) =>
+  prisma.param.findMany({
+    where: {
+      ...filters,
+    },
+    select: {
+      pmcId: true,
+      title: true,
+      name: true,
+      value: true,
+      pmc: {
+        select: {
+          name: true,
+          dateTime: true,
+        },
+      },
+    },
+    orderBy: {
+      pmcId: "desc",
+    },
+  });
+
 export const create = async (pmcId: string, values: CreateParamDto) =>
   prisma.param.create({
     data: {

@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 
-		"target": "ES5" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+		"target": "esnext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
 
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,

@@ -8,3 +8,4 @@ router.get("/list", FileController.getList);
 router.get("/:id/download", FileController.getFile);
 
 router.post("/generate", FileController.startGeneration);
+router.post("/generate-params", FileController.startParamsGeneration);

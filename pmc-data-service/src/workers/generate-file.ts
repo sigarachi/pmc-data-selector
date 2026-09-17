@@ -11,10 +11,16 @@ import { MarkerService } from "@services/marker";
 import { PmcService } from "@services/pmc";
 import { flatObject } from "../utils/flat-object";
 import util from "util";
+import { ParamsService } from "@services/params";
 
-const generateCsvFile = (array: Array<object>, fileName: string): string => {
+const generateCsvFile = (
+  array: Array<object>,
+  fileName: string,
+  columns?: string[],
+): string => {
   const output = stringify(array as Input, {
     header: true,
+    columns,
   });
 
   const path = `./files/${fileName}`;
@@ -122,6 +128,68 @@ const generateFile = async (message: object) => {
   }
 };
 
+const generateParamFile = async (message: object) => {
+  if (!isFileRequest(message)) {
+    logger.error("File worker: invalid message type");
+    return;
+  }
+
+  try {
+    const file = await FileService.getById(message.fileId);
+    const type = message.type;
+    const pmcId = message.pmcId;
+    let pmcDate: Date | null = null;
+
+    if (pmcId) {
+      const pmc = await PmcService.getById(pmcId);
+
+      pmcDate = pmc.dateTime;
+    }
+
+    if (!file) {
+      logger.error("File worker: no file");
+      return;
+    }
+
+    await FileService.update(file.id, { status: "running" });
+
+    const params = await ParamsService.getAll(pmcId);
+
+    const columns = ["pmcId", ...new Set(params.map((item) => item.title))];
+    const rowsByPmcId = new Map<string, Record<string, string>>();
+
+    for (const item of params) {
+      const row = rowsByPmcId.get(item.pmcId) ?? { pmcId: item.pmcId };
+
+      rowsByPmcId.set(item.pmcId, {
+        ...row,
+        [item.title]: item.value,
+      });
+    }
+
+    const flattenedParams = Array.from(rowsByPmcId.values());
+    let filePath;
+
+    const fileDate = pmcDate
+      ? `pmc_${format(pmcDate, "yyyy-MM-dd_HH-mm")}`
+      : `mass_${format(file.generationDate, "yyyy-MM-dd_HH-mm")}`;
+
+    const fileName = `${fileDate}.${type}`;
+
+    filePath = generateCsvFile(flattenedParams, fileName, columns);
+
+    await FileService.update(file.id, {
+      status: "done",
+      path: filePath,
+      name: fileName,
+      generationDate: new Date(Date.now()),
+    });
+  } catch (e) {
+    logger.error(e);
+    await FileService.update(message.fileId, { status: "error" });
+  }
+};
+
 const start = async () => {
   try {
     const amqpConnected = await amqp.connect();
@@ -130,6 +198,7 @@ const start = async () => {
     }
 
     amqp.subscribe(Queues.GenerateFileTask, generateFile);
+    amqp.subscribe(Queues.GeneratePmcParamsTask, generateParamFile);
   } catch (err) {
     logger.error(err);
     process.exit(1);

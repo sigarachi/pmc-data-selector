@@ -1,4 +1,4 @@
-import { create, getList } from "@db/params";
+import { create, getAll, getList } from "@db/params";
 import { CreateParamDto, ParamFilters } from "../models/param";
 import { DbFilter } from "../models/common";
 
@@ -15,6 +15,18 @@ export class ParamsService {
     }
 
     return getList(pmcId, preparedFilters);
+  }
+
+  static async getAll(pmcId?: string) {
+    const preparedFilters: DbFilter<{ pmcId: string }> = {};
+
+    if (pmcId) {
+      preparedFilters["pmcId"] = {
+        equals: pmcId,
+      };
+    }
+
+    return getAll(preparedFilters);
   }
 
   static async create(pmcId: string, values: CreateParamDto) {

@@ -1,6 +1,7 @@
 export enum Queues {
   GenerateFileTask = "generate-file-task",
   GenerateFileXLSX = "generate-file-xlsx",
+  GeneratePmcParamsTask = "generate-pmc-params",
 }
 
 export type GenerateFileType = "csv" | "xlsx";

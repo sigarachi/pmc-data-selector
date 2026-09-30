@@ -25,7 +25,7 @@ export const Files = () => {
 	const { page, pageSize, handleIncreasePage } = usePagination();
 
 	const { data } = useQuery({
-		queryKey: ['files'],
+		queryKey: ['files', page, pageSize],
 		queryFn: () => FileService.getList(page, pageSize),
 	});
 

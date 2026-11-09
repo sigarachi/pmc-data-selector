@@ -190,18 +190,13 @@ const generateParamFile = async (message: object) => {
 };
 
 const start = async () => {
-  try {
-    const amqpConnected = await amqp.connect();
-    if (!amqpConnected) {
-      throw new Error("File worker: AMQP connection failed");
-    }
-
-    amqp.subscribe(Queues.GenerateFileTask, generateFile);
-    amqp.subscribe(Queues.GeneratePmcParamsTask, generateParamFile);
-  } catch (err) {
-    console.error(err);
-    process.exit(1);
+  const amqpConnected = await amqp.connect();
+  if (!amqpConnected) {
+    throw new Error("File worker: AMQP connection failed");
   }
+
+  amqp.subscribe(Queues.GenerateFileTask, generateFile);
+  amqp.subscribe(Queues.GeneratePmcParamsTask, generateParamFile);
 };
 
 start();

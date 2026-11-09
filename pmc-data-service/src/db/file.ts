@@ -13,6 +13,9 @@ export const getList = async (
     where: {
       ...filters,
     },
+    orderBy: {
+      generationDate: "desc",
+    },
   });
 
 export const getCount = async () => prisma.file.count();

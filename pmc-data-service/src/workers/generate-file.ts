@@ -1,6 +1,5 @@
 import { amqp } from "../libs/amqp";
 import { Queues } from "../libs/amqp/interfaces";
-import logger from "../libs/logger";
 import { isFileRequest } from "../utils/typeguards";
 import { Input, stringify } from "csv-stringify/sync";
 import { utils, write } from "xlsx";
@@ -56,7 +55,7 @@ const generateXlsx = (array: Array<object>, fileName: string): string => {
 
 const generateFile = async (message: object) => {
   if (!isFileRequest(message)) {
-    logger.error("File worker: invalid message type");
+    console.error("File worker: invalid message type");
     return;
   }
 
@@ -73,7 +72,7 @@ const generateFile = async (message: object) => {
     }
 
     if (!file) {
-      logger.error("File worker: no file");
+      console.error("File worker: no file");
       return;
     }
     await FileService.update(file.id, { status: "running" });
@@ -123,14 +122,14 @@ const generateFile = async (message: object) => {
       generationDate: new Date(Date.now()),
     });
   } catch (e) {
-    logger.error(e);
+    console.error(e);
     await FileService.update(message.fileId, { status: "error" });
   }
 };
 
 const generateParamFile = async (message: object) => {
   if (!isFileRequest(message)) {
-    logger.error("File worker: invalid message type");
+    console.error("File worker: invalid message type");
     return;
   }
 
@@ -147,7 +146,7 @@ const generateParamFile = async (message: object) => {
     }
 
     if (!file) {
-      logger.error("File worker: no file");
+      console.error("File worker: no file");
       return;
     }
 
@@ -185,7 +184,7 @@ const generateParamFile = async (message: object) => {
       generationDate: new Date(Date.now()),
     });
   } catch (e) {
-    logger.error(e);
+    console.error(e);
     await FileService.update(message.fileId, { status: "error" });
   }
 };
@@ -200,7 +199,7 @@ const start = async () => {
     amqp.subscribe(Queues.GenerateFileTask, generateFile);
     amqp.subscribe(Queues.GeneratePmcParamsTask, generateParamFile);
   } catch (err) {
-    logger.error(err);
+    console.error(err);
     process.exit(1);
   }
 };
